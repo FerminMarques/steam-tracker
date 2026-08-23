@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted } from "vue";
 import { useAppStore } from "../stores/app";
 import AchievementCard from "../components/AchievementCard.vue";
 import GuidesPanel from "../components/GuidesPanel.vue";
+import Icon from "../components/Icon.vue";
 
 const store = useAppStore();
 // Avoids vue-tsc narrowing `selectedAchievement` to null inside the v-else branch
@@ -18,11 +19,13 @@ onUnmounted(() => store.stopPolling());
     <div class="game-header">
       <div v-if="store.currentGame" class="game-info">
         <img
-          :src="`https://cdn.cloudflare.steamstatic.com/steam/apps/${store.currentGame.appId}/capsule_184x69.jpg`"
+          v-if="store.currentGameArt"
+          :key="store.currentGameArt"
+          :src="store.currentGameArt"
           :alt="store.currentGame.name"
           class="game-art"
-          @error="($event.target as HTMLImageElement).style.display = 'none'"
         />
+        <div v-else class="game-art-placeholder"></div>
         <div class="game-text">
           <div class="game-name">{{ store.currentGame.name }}</div>
           <div class="game-progress">
@@ -44,11 +47,11 @@ onUnmounted(() => store.stopPolling());
           title="Refresh achievements"
           @click="store.refreshAchievements()"
         >
-          ⟳
+          <Icon name="refresh" :size="13" />
         </button>
       </div>
       <div v-else class="no-game">
-        <div class="no-game-icon">🎮</div>
+        <div class="no-game-icon"><Icon name="gamepad" :size="26" /></div>
         <div class="no-game-text">
           <div class="no-game-title">No game detected</div>
           <div class="no-game-sub">Launch a Steam game to start tracking</div>
@@ -58,11 +61,11 @@ onUnmounted(() => store.stopPolling());
           title="Check now"
           @click="store.pollCurrentGame()"
         >
-          ⟳
+          <Icon name="refresh" :size="13" />
         </button>
       </div>
       <div class="borderless-tip">
-        💡 For the overlay to work in-game, set your game to
+        For the overlay to work in-game, set your game to
         <strong>Borderless Windowed</strong> mode
       </div>
     </div>
@@ -87,7 +90,7 @@ onUnmounted(() => store.stopPolling());
 
         <!-- No game / no achievements -->
         <div v-else-if="!store.currentGame" class="center-state">
-          <div class="idle-icon">⏳</div>
+          <div class="idle-icon"><Icon name="clock" :size="30" /></div>
           <p>Waiting for a Steam game to launch...</p>
           <p class="idle-sub">The app checks every 30 seconds</p>
         </div>
@@ -96,7 +99,7 @@ onUnmounted(() => store.stopPolling());
           v-else-if="!store.achievements.length && !store.loadingAchievements"
           class="center-state"
         >
-          <div class="idle-icon">🎖️</div>
+          <div class="idle-icon"><Icon name="trophy" :size="30" /></div>
           <p>This game has no achievements</p>
         </div>
 
@@ -139,16 +142,17 @@ onUnmounted(() => store.stopPolling());
           </div>
 
           <div v-if="!store.displayed.length" class="center-state">
-            <div class="idle-icon">🎉</div>
+            <div class="idle-icon"><Icon name="star" :size="30" /></div>
             <p>All achievements completed!</p>
           </div>
 
           <!-- Search + Sort bar -->
           <div class="search-bar">
+            <span class="search-glyph"><Icon name="search" :size="12" /></span>
             <input
               v-model="store.searchQuery"
               class="search-input"
-              placeholder="🔍  Search achievements..."
+              placeholder="Search achievements..."
               type="text"
             />
             <select v-model="store.sortBy" class="sort-select">
@@ -205,6 +209,18 @@ onUnmounted(() => store.stopPolling());
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
+}
+.game-art-placeholder {
+  width: 92px;
+  height: 34px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: var(--surface);
+  animation: pulse-hk-placeholder 1.2s ease-in-out infinite alternate;
+}
+@keyframes pulse-hk-placeholder {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
 }
 .game-text {
   flex: 1;
@@ -274,19 +290,20 @@ onUnmounted(() => store.stopPolling());
 }
 .refresh-btn {
   margin-left: auto;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 16px;
-  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 2px;
+  line-height: 0;
   transition: all 0.15s;
   flex-shrink: 0;
 }
 .refresh-btn:hover {
-  background: rgba(129, 140, 248, 0.18);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  transform: rotate(45deg);
 }
 .content-area {
   flex: 1;
@@ -343,9 +360,13 @@ onUnmounted(() => store.stopPolling());
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 4px 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 7px 10px;
+  border-radius: 2px 2px 0 0;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
 }
@@ -368,12 +389,22 @@ onUnmounted(() => store.stopPolling());
   background: var(--accent-soft);
   color: var(--accent);
 }
+.idle-icon,
+.no-game-icon {
+  opacity: 0.35;
+  color: var(--accent);
+}
 .search-bar {
   display: flex;
   gap: 6px;
   padding: 8px 10px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--border);
+}
+.search-glyph {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
 }
 .search-input {
   flex: 1;

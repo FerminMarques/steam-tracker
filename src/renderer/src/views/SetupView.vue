@@ -239,7 +239,7 @@ function openApiKeyPage() {
       </button>
 
       <p class="privacy-note">
-        🔒 Your API key is stored locally on your PC and never shared.
+        Your API key is stored locally on your PC and never shared.
       </p>
     </div>
   </div>

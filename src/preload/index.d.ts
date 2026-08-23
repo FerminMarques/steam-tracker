@@ -9,6 +9,7 @@ export interface SteamApi {
   clearConfig(): Promise<boolean>
   saveLanguage(lang: string): Promise<boolean>
   getCurrentGame(): Promise<ApiResult<SteamGame>>
+  getGameArt(appId: string): Promise<string | null>
   getAchievements(appId: string): Promise<ApiResult<Achievement[]>>
   searchWeb(appId: string, gameName: string, achievementName: string): Promise<Guide[]>
   fetchGuideContent(url: string, achievementName: string, full?: boolean): Promise<{ success: boolean; content: string }>

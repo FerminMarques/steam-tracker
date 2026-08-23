@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { useAppStore } from "../stores/app";
 import type { Guide } from "../stores/app";
+import Icon from "./Icon.vue";
 
 const store = useAppStore();
 
@@ -32,7 +33,8 @@ function looksLikeProgress(desc: string): boolean {
   <div class="guides-panel">
     <div class="guides-header">
       <button class="back-btn" @click="store.clearSelectedAchievement()">
-        ← Back
+        <Icon name="arrow-left" :size="12" />
+        Back
       </button>
       <div class="guides-title">
         <span class="ach-name-label">{{
@@ -46,7 +48,7 @@ function looksLikeProgress(desc: string): boolean {
       v-if="store.selectedAchievement && !store.selectedAchievement.achieved && store.selectedAchievement.currentProgress === null && looksLikeProgress(store.selectedAchievement.description)"
       class="no-progress-note"
     >
-      ℹ️ Steam tracks progress for this achievement internally, but uses a stat
+      Steam tracks progress for this achievement internally, but uses a stat
       name we couldn't match to this specific achievement. Check your in-game
       stats to see how far along you are.
     </div>
@@ -57,7 +59,7 @@ function looksLikeProgress(desc: string): boolean {
     </div>
 
     <div v-else-if="!store.guides.length" class="guides-empty">
-      <div class="empty-icon">📖</div>
+      <div class="empty-icon"><Icon name="book" :size="28" /></div>
       <p>No guides found for this achievement.</p>
       <a
         :href="`https://steamcommunity.com/app/${store.currentGame?.appId}/guides/`"
@@ -85,9 +87,9 @@ function looksLikeProgress(desc: string): boolean {
         @click="store.openGuideReader(guide)"
       >
         <div class="guide-title-row">
-          <span v-if="guide.is100Percent" class="badge-100">100% 🏆</span>
+          <span v-if="guide.is100Percent" class="badge-100">100% · TROPHY</span>
           <span v-if="isGuidePinned(guide)" class="badge-guide-pin"
-            >📍 Pinned</span
+            >PINNED</span
           >
           <span class="guide-title">{{ guide.title }}</span>
         </div>
@@ -95,12 +97,12 @@ function looksLikeProgress(desc: string): boolean {
           {{ guide.shortDescription }}
         </div>
         <div v-if="guide.is100Percent" class="guide-ach-hint">
-          💡 Search for
+          Search for
           <strong>"{{ store.selectedAchievement?.displayName }}"</strong> in
           this guide
         </div>
         <div class="guide-meta">
-          <span class="guide-votes">🌐 {{ guide.domain }}</span>
+          <span class="guide-votes">{{ guide.domain }}</span>
           <div class="guide-actions">
             <button
               class="guide-pin-btn"
@@ -112,16 +114,9 @@ function looksLikeProgress(desc: string): boolean {
               "
               @click.stop="onGuidePinClick($event, guide)"
             >
-              {{ isGuidePinned(guide) ? "📍" : "📌" }}
+              <Icon :name="isGuidePinned(guide) ? 'check' : 'book'" :size="11" />
             </button>
-            <button
-              class="guide-ext-btn"
-              title="Open in browser"
-              @click.stop="openGuide(guide.url)"
-            >
-              🌐
-            </button>
-            <span class="guide-link">Read →</span>
+            <span class="guide-link">READ</span>
           </div>
         </div>
       </div>

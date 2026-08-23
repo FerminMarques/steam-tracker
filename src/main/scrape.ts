@@ -38,6 +38,8 @@ function stripTags(html: string): string {
 
 function decodeEntities(s: string): string {
   return s
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h: string) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d: string) => String.fromCodePoint(parseInt(d, 10)))
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
@@ -96,13 +98,23 @@ function extractGenericContent(html: string): string {
   // Try to find article/main content
   const articleMatch = clean.match(/<(?:article|main)[^>]*>([\s\S]*?)<\/(?:article|main)>/i)
   if (articleMatch) clean = articleMatch[1]
+  // Convert block-level tags to newlines BEFORE stripping, so structure survives
   return decodeEntities(clean
-    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|section|article|li|tr|h[1-6])>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
     .replace(/<\/h[1-6]>/gi, '\n')
     .replace(/<h[1-6][^>]*>/gi, '\n## ')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .replace(/\n /g, '\n'))
+    // Collapse spaces/tabs but PRESERVE newlines (they carry the structure)
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ ?\n ?/g, '\n'))
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    // Drop empty-bullet lines (nav/list wrappers) and blank-line runs
+    .map((l) => l.trim())
+    .filter((l) => l && !/^[\s•]+$/.test(l))
+    .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }

@@ -14,6 +14,8 @@ const steamApi = {
     ipcRenderer.invoke('steam:save-language', lang),
   getCurrentGame: (): Promise<ApiResult<SteamGame>> =>
     ipcRenderer.invoke('steam:get-current-game'),
+  getGameArt: (appId: string): Promise<string | null> =>
+    ipcRenderer.invoke('steam:get-game-art', appId),
   getAchievements: (appId: string): Promise<ApiResult<Achievement[]>> =>
     ipcRenderer.invoke('steam:get-achievements', appId),
   searchWeb: (appId: string, gameName: string, achievementName: string): Promise<Guide[]> =>

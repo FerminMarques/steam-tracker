@@ -10,7 +10,7 @@ import {
   DEFAULT_PROGRESS_UP
 } from './hotkeys'
 import { createWindow, focusResize } from './window'
-import { getCurrentGame, getAchievements, resolveVanity } from './steam'
+import { getCurrentGame, getAchievements, getGameArt, resolveVanity } from './steam'
 import { searchWeb } from './search'
 import { fetchGuideContent } from './scrape'
 
@@ -44,6 +44,9 @@ app.whenReady().then(() => {
 
   // --- Achievements ---
   ipcMain.handle('steam:get-achievements', (_, appId: string) => getAchievements(appId))
+
+  // --- Game header art ---
+  ipcMain.handle('steam:get-game-art', (_, appId: string) => getGameArt(appId))
 
   // --- Web search (DuckDuckGo + static fallbacks) ---
   ipcMain.handle('search:web', (_, { appId, gameName, achievementName }: { appId: string; gameName: string; achievementName: string }) =>

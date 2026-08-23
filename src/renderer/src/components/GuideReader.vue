@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useAppStore } from "../stores/app";
+import Icon from "./Icon.vue";
 
 const store = useAppStore();
 
@@ -9,10 +10,12 @@ interface Block {
   text: string;
 }
 
-/** Render guide text: "## " lines as headings, "• " as bullets, rest as paragraphs */
+/** Render guide text: "## " lines as headings, "• " as bullets, rest as paragraphs.
+ *  Normalizes inline "##" markers (generic extraction may not break lines). */
 const blocks = computed<Block[]>(() => {
   const out: Block[] = [];
-  for (const line of (store.readerGuide?.content ?? "").split("\n")) {
+  const raw = (store.readerGuide?.content ?? "").replace(/\s*##\s*/g, "\n## ");
+  for (const line of raw.split("\n")) {
     const t = line.trim();
     if (!t) continue;
     if (t.startsWith("## ")) out.push({ type: "h", text: t.slice(3) });
@@ -34,8 +37,8 @@ function openExternal() {
         <div class="reader-header">
           <span class="reader-title">{{ store.readerGuide.title }}</span>
           <div class="reader-header-actions">
-            <button class="reader-ext-btn" title="Open in browser" @click="openExternal">🌐</button>
-            <button class="reader-close" title="Close" @click="store.closeGuideReader()">✕</button>
+            <button class="reader-ext-btn" title="Open in browser" @click="openExternal"><Icon name="external" :size="13" /></button>
+            <button class="reader-close" title="Close" @click="store.closeGuideReader()"><Icon name="close" :size="12" /></button>
           </div>
         </div>
         <div class="reader-body">
@@ -142,15 +145,19 @@ function openExternal() {
   font-size: 13px;
 }
 .r-h {
-  margin: 6px 0 0;
-  font-size: 13px;
+  margin: 10px 0 0;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--accent-border);
 }
 .r-p {
   margin: 0;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-secondary);
   white-space: pre-wrap;
 }
@@ -159,7 +166,7 @@ function openExternal() {
   padding-left: 14px;
   position: relative;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-secondary);
 }
 .r-bullet {

@@ -1,7 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  --bg: #0c0e14;
+  --bg: #0b0d12;
   --surface: rgba(255, 255, 255, 0.035);
   --surface-hover: rgba(255, 255, 255, 0.06);
   --accent: #818cf8;
@@ -10,16 +10,39 @@
   --text: #e2e8f0;
   --text-secondary: #94a3b8;
   --text-muted: #475569;
-  --border: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.07);
   --success: #4ade80;
   --warning: #fbbf24;
   --danger: #f87171;
-  --radius: 8px;
+  --radius: 3px;
+
+  /* HUD identity */
+  --font-display: 'Chakra Petch', 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Rarity tiers (independent of accent theme) */
   --rarity-mythic: #fbbf24;
   --rarity-epic: #a78bfa;
   --rarity-rare: #60a5fa;
+}
+
+/* Subtle scanline atmosphere over the base surface */
+.app-hud-texture {
+  position: relative;
+}
+.app-hud-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.014) 0,
+    rgba(255, 255, 255, 0.014) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 9999;
 }
 
 /* --- Accent themes --- */
@@ -86,7 +109,15 @@ html, body, #app {
 
 body {
   background: transparent;
+  font-family: var(--font-display);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Numeric readouts use mono with fixed-width digits */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .spinner {

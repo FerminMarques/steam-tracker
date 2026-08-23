@@ -192,7 +192,7 @@ async function logout() {
 </script>
 
 <template>
-  <div class="app-root" :class="{ 'focus-mode': store.focusMode }">
+  <div class="app-root app-hud-texture" :class="{ 'focus-mode': store.focusMode }">
     <TitleBar v-if="!store.focusMode" @open-settings="openSettings" />
     <div v-if="loading" class="loading-screen">
       <div class="spinner"></div>

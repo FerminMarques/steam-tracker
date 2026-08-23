@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import { useAppStore } from "../stores/app";
+import Icon from "./Icon.vue";
 
 const emit = defineEmits<{ openSettings: [] }>();
 const store = useAppStore();
@@ -27,10 +28,10 @@ const toggleTop = () => window.steamApi.toggleTop();
 <template>
   <div class="titlebar">
     <div class="titlebar-drag">
-      <span class="app-icon">◆</span>
-      <span class="app-title">Achivio</span>
+      <span class="app-icon"></span>
+      <span class="app-title">ACHIVIO</span>
       <button class="tb-btn tb-settings" title="Settings" @click="emit('openSettings')">
-        ⚙
+        <Icon name="sliders" :size="13" />
       </button>
     </div>
     <div class="titlebar-actions">
@@ -45,7 +46,7 @@ const toggleTop = () => window.steamApi.toggleTop();
         "
         @click="store.toggleFocusMode()"
       >
-        🎯
+        <Icon name="target" :size="14" />
       </button>
       <button
         class="tb-btn tb-pin"
@@ -59,8 +60,8 @@ const toggleTop = () => window.steamApi.toggleTop();
       >
         <span class="pin-dot"></span>
       </button>
-      <button class="tb-btn" title="Minimize" @click="minimize">−</button>
-      <button class="tb-btn tb-close" title="Close" @click="close">✕</button>
+      <button class="tb-btn" title="Minimize" @click="minimize"><Icon name="minus" :size="13" /></button>
+      <button class="tb-btn tb-close" title="Close" @click="close"><Icon name="close" :size="12" /></button>
     </div>
   </div>
 </template>
@@ -70,9 +71,9 @@ const toggleTop = () => window.steamApi.toggleTop();
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(12, 14, 20, 0.95);
-  border-bottom: 1px solid var(--border);
+  padding: 7px 10px;
+  background: rgba(11, 13, 18, 0.96);
+  border-bottom: 1px solid var(--accent-border);
   -webkit-app-region: drag;
   user-select: none;
   flex-shrink: 0;
@@ -83,15 +84,16 @@ const toggleTop = () => window.steamApi.toggleTop();
   gap: 8px;
 }
 .app-icon {
-  font-size: 11px;
-  color: var(--accent);
-  opacity: 0.8;
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 .app-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: 0.3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 2.5px;
 }
 .tb-settings {
   font-size: 12px;
@@ -112,10 +114,13 @@ const toggleTop = () => window.steamApi.toggleTop();
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 3px 7px;
+  border-radius: 2px;
   font-size: 13px;
   transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .tb-btn:hover {
   background: var(--surface-hover);

@@ -12,6 +12,7 @@ const _fullGuideCache = new Map<string, string>()
 
 export const useAppStore = defineStore('app', () => {
   const currentGame = ref<{ appId: string; name: string } | null>(null)
+  const currentGameArt = ref<string | null>(null)
   const achievements = ref<Achievement[]>([])
   const selectedAchievement = ref<Achievement | null>(null)
   const guides = ref<Guide[]>([])
@@ -238,6 +239,7 @@ export const useAppStore = defineStore('app', () => {
       readerGuide.value = null
       lastAppId.value = newAppId
       currentGame.value = game
+      currentGameArt.value = null
       selectedAchievement.value = null
       guides.value = []
       achievements.value = []
@@ -256,6 +258,10 @@ export const useAppStore = defineStore('app', () => {
           // Restore saved pins
           const savedPins = await window.steamApi.getPinnedAchievements(game.appId)
           if (savedPins.length) pinnedAchievements.value = new Set(savedPins)
+          // Resolve header art (async, doesn't block the list)
+          window.steamApi.getGameArt(game.appId).then((url) => {
+            if (currentGame.value?.appId === game.appId && url) currentGameArt.value = url
+          }).catch(() => { })
         } finally {
           loadingAchievements.value = false
         }
@@ -322,7 +328,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   return {
-    currentGame, achievements, selectedAchievement, guides,
+    currentGame, achievements, selectedAchievement, guides, currentGameArt,
     loadingGame, loadingAchievements, loadingGuides, activeTab,
     searchQuery, sortBy, isOnTop, pinnedAchievements, pinnedGuides, focusMode,
     expandedGuides, manualProgress, achievementsError,

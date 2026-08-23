@@ -203,6 +203,39 @@ function fixIconUrl(url: string): string {
   )
 }
 
+/** Resolve the best header image for a game.
+ *  Legacy games have predictable capsule paths; newer ones use hashed
+ *  store_item_assets only discoverable via the appdetails endpoint. */
+const artCache = new Map<string, string>()
+
+export async function getGameArt(appId: string): Promise<string | null> {
+  if (artCache.has(appId)) return artCache.get(appId)!
+  const legacy = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/capsule_184x69.jpg`
+  try {
+    const head = await axios.head(legacy, { timeout: 8000 })
+    if (head.status === 200) {
+      artCache.set(appId, legacy)
+      return legacy
+    }
+  } catch {
+    // fall through to appdetails
+  }
+  try {
+    const res = await axios.get(`https://store.steampowered.com/api/appdetails?appids=${appId}`, {
+      timeout: 10000
+    })
+    const data = res.data?.[appId]?.data
+    const url = (data?.capsule_image || data?.header_image || '') as string
+    if (url) {
+      artCache.set(appId, url)
+      return url
+    }
+  } catch {
+    // network failure — leave uncached so we retry next poll cycle change
+  }
+  return null
+}
+
 export async function getAchievements(appId: string): Promise<ApiResult<Achievement[]>> {
   const apiKey = store.get('apiKey') as string
   const steamId = store.get('steamId') as string

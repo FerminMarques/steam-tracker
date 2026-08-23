@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useAppStore } from "../stores/app";
 import type { Achievement } from "../stores/app";
+import Icon from "./Icon.vue";
 
 const props = defineProps<{ achievement: Achievement; selected?: boolean }>();
 const emit = defineEmits<{ select: [ach: Achievement] }>();
@@ -99,7 +100,7 @@ function removeProgress(e: MouseEvent) {
         class="ach-icon"
         loading="lazy"
       />
-      <div v-else class="ach-icon-placeholder">🏆</div>
+      <div v-else class="ach-icon-placeholder"><Icon name="trophy" :size="20" /></div>
     </div>
     <div class="ach-info">
       <div class="ach-name">{{ achievement.displayName }}</div>
@@ -124,9 +125,7 @@ function removeProgress(e: MouseEvent) {
             }"
           ></div>
         </div>
-        <span class="ach-progress-label"
-          >{{ achievement.currentProgress }}/{{ achievement.maxProgress }}</span
-        >
+        <span class="ach-progress-label num">{{ achievement.currentProgress }}/{{ achievement.maxProgress }}</span>
       </div>
       <!-- Manual progress tracking -->
       <div v-else-if="mp" class="ach-progress">
@@ -138,7 +137,7 @@ function removeProgress(e: MouseEvent) {
         </div>
         <div class="manual-controls" @click.stop>
           <button class="mp-btn" title="-1" @click="adjustProgress($event, -1)">−</button>
-          <span class="ach-progress-label">{{ mp.current }}/{{ mp.max }}</span>
+          <span class="ach-progress-label num">{{ mp.current }}/{{ mp.max }}</span>
           <button class="mp-btn" title="+1" @click="adjustProgress($event, 1)">+</button>
           <button class="mp-btn mp-remove" title="Stop tracking" @click="removeProgress($event)">✕</button>
         </div>
@@ -163,8 +162,8 @@ function removeProgress(e: MouseEvent) {
         <button class="mp-btn" @click="cancelManualTrack($event)">✕</button>
       </div>
       <div class="ach-meta">
-        <span class="ach-pct" :class="rarity">
-          <i class="rarity-dot"></i>{{ achievement.globalPercent }}% of players
+        <span class="ach-pct num" :class="rarity">
+          <i class="rarity-dot"></i>{{ achievement.globalPercent }}%
         </span>
         <span
           v-if="achievement.achieved && achievement.unlockTime"
@@ -187,8 +186,8 @@ function removeProgress(e: MouseEvent) {
       >
         <span class="pin-indicator"></span>
       </button>
-      <span v-if="achievement.achieved" class="badge done">✓</span>
-      <span v-else class="badge todo">○</span>
+      <span v-if="achievement.achieved" class="badge done"><Icon name="check" :size="13" /></span>
+      <span v-else class="badge todo"><Icon name="target" :size="11" /></span>
     </div>
   </div>
 </template>
@@ -329,6 +328,11 @@ function removeProgress(e: MouseEvent) {
   font-size: 10px;
   color: var(--text-secondary);
 }
+.ach-date {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--success);
+}
 .rarity-dot {
   width: 5px;
   height: 5px;
@@ -390,6 +394,9 @@ function removeProgress(e: MouseEvent) {
 .badge {
   font-size: 14px;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .badge.done {
   color: var(--success);
