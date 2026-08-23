@@ -1,0 +1,117 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --bg: #0c0e14;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --accent: #818cf8;
+  --accent-soft: rgba(129, 140, 248, 0.12);
+  --accent-border: rgba(129, 140, 248, 0.25);
+  --text: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  --border: rgba(255, 255, 255, 0.06);
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --radius: 8px;
+
+  /* Rarity tiers (independent of accent theme) */
+  --rarity-mythic: #fbbf24;
+  --rarity-epic: #a78bfa;
+  --rarity-rare: #60a5fa;
+}
+
+/* --- Accent themes --- */
+[data-theme="emerald"] {
+  --accent: #34d399;
+  --accent-soft: rgba(52, 211, 153, 0.12);
+  --accent-border: rgba(52, 211, 153, 0.25);
+}
+[data-theme="amber"] {
+  --accent: #fb923c;
+  --accent-soft: rgba(251, 146, 60, 0.12);
+  --accent-border: rgba(251, 146, 60, 0.25);
+}
+[data-theme="rose"] {
+  --accent: #f472b6;
+  --accent-soft: rgba(244, 114, 182, 0.12);
+  --accent-border: rgba(244, 114, 182, 0.25);
+}
+[data-theme="cyan"] {
+  --accent: #22d3ee;
+  --accent-soft: rgba(34, 211, 238, 0.12);
+  --accent-border: rgba(34, 211, 238, 0.25);
+}
+[data-theme="crimson"] {
+  --accent: #fb7185;
+  --accent-soft: rgba(251, 113, 133, 0.12);
+  --accent-border: rgba(251, 113, 133, 0.25);
+}
+
+/* --- Shared animations --- */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-view-enter-active,
+.fade-view-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fade-view-enter-from {
+  opacity: 0;
+  transform: translateY(8px) scale(0.99);
+}
+.fade-view-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.995);
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+p { margin: 0; }
+button { font-family: inherit; }
+input { font-family: inherit; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.15);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 140, 248, 0.25);
+}

@@ -1,0 +1,27 @@
+{
+  "name": "steam-tracker",
+  "version": "1.0.0",
+  "description": "Steam Tracker — Achievement Overlay",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^3.0.0",
+    "axios": "^1.7.9",
+    "pinia": "^2.2.6",
+    "vue": "^3.5.12"
+  },
+  "devDependencies": {
+    "@electron-toolkit/preload": "^3.0.0",
+    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "electron": "^34.3.0",
+    "electron-vite": "^3.1.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vue-tsc": "^2.1.10"
+  }
+}

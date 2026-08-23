@@ -1,0 +1,195 @@
+import { app, BrowserWindow, ipcMain, shell, globalShortcut } from 'electron'
+import { electronApp, optimizer } from '@electron-toolkit/utils'
+import { store } from './store'
+import {
+  registerHotkeys,
+  setStoredHotkey,
+  DEFAULT_HOTKEY,
+  DEFAULT_FOCUS_HOTKEY,
+  DEFAULT_PROGRESS_DOWN,
+  DEFAULT_PROGRESS_UP
+} from './hotkeys'
+import { createWindow, focusResize } from './window'
+import { getCurrentGame, getAchievements, resolveVanity } from './steam'
+import { searchWeb } from './search'
+import { fetchGuideContent } from './scrape'
+
+app.whenReady().then(() => {
+  store.init(app.getPath('userData'))
+  electronApp.setAppUserModelId('com.steam-tracker')
+  app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
+
+  // --- Config ---
+  ipcMain.handle('steam:get-config', () => ({
+    apiKey: store.get('apiKey', '') as string,
+    steamId: store.get('steamId', '') as string,
+    language: store.get('language', 'english') as string,
+    theme: store.get('theme', 'violet') as string
+  }))
+
+  ipcMain.handle('theme:set', (_, theme: string) => {
+    store.set('theme', theme)
+    return true
+  })
+
+  ipcMain.handle('steam:save-config', (_, cfg: { apiKey: string; steamId: string; language?: string }) => {
+    const entries: Record<string, string> = { apiKey: cfg.apiKey, steamId: cfg.steamId }
+    if (cfg.language) entries.language = cfg.language
+    store.setMany(entries)
+    return true
+  })
+
+  // --- Current game ---
+  ipcMain.handle('steam:get-current-game', () => getCurrentGame())
+
+  // --- Achievements ---
+  ipcMain.handle('steam:get-achievements', (_, appId: string) => getAchievements(appId))
+
+  // --- Web search (DuckDuckGo + static fallbacks) ---
+  ipcMain.handle('search:web', (_, { appId, gameName, achievementName }: { appId: string; gameName: string; achievementName: string }) =>
+    searchWeb(appId, gameName, achievementName)
+  )
+
+  // --- Open URL in default browser ---
+  ipcMain.on('open:url', (_, url: string) => {
+    shell.openExternal(url)
+  })
+
+  // --- Window controls ---
+  ipcMain.on('window:minimize', (e) => BrowserWindow.fromWebContents(e.sender)?.minimize())
+  ipcMain.on('window:close', (e) => BrowserWindow.fromWebContents(e.sender)?.close())
+  ipcMain.on('window:toggle-top', (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    if (win) {
+      const next = !win.isAlwaysOnTop()
+      // 'screen-saver' level: stays on top of games in borderless windowed
+      if (next) win.setAlwaysOnTop(true, 'screen-saver')
+      else win.setAlwaysOnTop(false)
+      win.webContents.send('window:top-changed', next)
+    }
+  })
+  ipcMain.handle('window:is-on-top', (e) =>
+    BrowserWindow.fromWebContents(e.sender)?.isAlwaysOnTop() ?? false
+  )
+  ipcMain.handle('steam:clear-config', () => {
+    store.setMany({ apiKey: '', steamId: '' })
+    return true
+  })
+
+  // --- Hotkey ---
+  ipcMain.handle('hotkey:get', () => store.get('hotkey', DEFAULT_HOTKEY))
+  ipcMain.handle('hotkey:set', (_, accelerator: string) => {
+    const ok = setStoredHotkey('hotkey', accelerator)
+    if (ok) {
+      const win = BrowserWindow.getAllWindows()[0]
+      win?.webContents.send('hotkey:changed', accelerator)
+    }
+    return ok
+  })
+
+  // --- Focus Hotkey ---
+  ipcMain.handle('focus-hotkey:get', () => store.get('focusHotkey', DEFAULT_FOCUS_HOTKEY))
+  ipcMain.handle('focus-hotkey:set', (_, accelerator: string) =>
+    setStoredHotkey('focusHotkey', accelerator)
+  )
+
+  // --- Progress +/- Keys ---
+  ipcMain.handle('progress-keys:get', () => ({
+    down: store.get('progressDownKey', DEFAULT_PROGRESS_DOWN),
+    up: store.get('progressUpKey', DEFAULT_PROGRESS_UP)
+  }))
+  ipcMain.handle('progress-keys:set', (_, { down, up }: { down: string; up: string }) => {
+    const wins = BrowserWindow.getAllWindows()
+    if (!wins.length) return false
+    store.setMany({ progressDownKey: down, progressUpKey: up })
+    registerHotkeys(wins[0], store.get('hotkey', DEFAULT_HOTKEY))
+    return true
+  })
+
+  // --- Focus mode resize ---
+  ipcMain.on('focus:resize', (e, payload) => focusResize(e, payload))
+
+  // --- Window opacity ---
+  ipcMain.handle('window:get-opacity', (e) =>
+    BrowserWindow.fromWebContents(e.sender)?.getOpacity() ?? 1
+  )
+  ipcMain.on('window:set-opacity', (e, value: number) => {
+    BrowserWindow.fromWebContents(e.sender)?.setOpacity(Math.max(0.1, Math.min(1, value)))
+  })
+
+  // --- Resolve Steam vanity URL → Steam ID64 ---
+  ipcMain.handle('steam:resolve-vanity', (_, { apiKey, vanityUrl }: { apiKey: string; vanityUrl: string }) =>
+    resolveVanity(apiKey, vanityUrl)
+  )
+
+  // --- Save language ---
+  ipcMain.handle('steam:save-language', (_, lang: string) => {
+    store.set('language', lang)
+    return true
+  })
+
+  // --- Pinned achievements persistence ---
+  ipcMain.handle('pinned:get', (_, appId: string): string[] => {
+    try {
+      return JSON.parse(store.get(`pins_${appId}`, '[]'))
+    } catch {
+      return []
+    }
+  })
+  ipcMain.handle('pinned:set', (_, { appId, pins }: { appId: string; pins: string[] }) => {
+    try {
+      store.set(`pins_${appId}`, JSON.stringify(pins))
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  // --- Manual progress tracking ---
+  // Stored per game as JSON: { achApiName: { current, max } }
+  ipcMain.handle('manual-progress:get', (_, appId: string) => {
+    try {
+      return JSON.parse(store.get(`mp_${appId}`, '{}'))
+    } catch {
+      return {}
+    }
+  })
+
+  ipcMain.handle('manual-progress:set', (_, { appId, achApiName, current, max }: { appId: string; achApiName: string; current: number; max: number }) => {
+    try {
+      const data = JSON.parse(store.get(`mp_${appId}`, '{}'))
+      data[achApiName] = { current: Math.max(0, Math.min(current, max)), max }
+      store.set(`mp_${appId}`, JSON.stringify(data))
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  ipcMain.handle('manual-progress:delete', (_, { appId, achApiName }: { appId: string; achApiName: string }) => {
+    try {
+      const data = JSON.parse(store.get(`mp_${appId}`, '{}'))
+      delete data[achApiName]
+      store.set(`mp_${appId}`, JSON.stringify(data))
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  // --- Fetch guide content ---
+  ipcMain.handle('fetch:guide-content', (_, { url, achievementName, full }: { url: string; achievementName: string; full?: boolean }) =>
+    fetchGuideContent(url, achievementName, full ?? false)
+  )
+
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  globalShortcut.unregisterAll()
+  if (process.platform !== 'darwin') app.quit()
+})

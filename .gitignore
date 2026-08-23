@@ -1,0 +1,20 @@
+# Dependencias
+node_modules/
+
+# Build output
+out/
+*.tsbuildinfo
+
+# AI tooling (autoskills)
+.agents/
+
+# Entorno/secrets
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
