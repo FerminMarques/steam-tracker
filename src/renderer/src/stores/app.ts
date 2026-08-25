@@ -219,6 +219,23 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  /**
+   * Called after the language setting changes: invalidates all
+   * language-dependent caches and re-fetches achievements + guides.
+   */
+  async function applyLanguageChange() {
+    _searchGen++
+    _guidesCache.clear()
+    _fullGuideCache.clear()
+    await refreshAchievements()
+    const sel = selectedAchievement.value
+    if (sel && currentGame.value) {
+      // Re-run the guide search in the new language (caches are already cleared)
+      const fresh = achievements.value.find((a) => a.apiName === sel.apiName)
+      if (fresh) await selectAchievement(fresh)
+    }
+  }
+
   function pollCurrentGame() {
     // Skip while the overlay is hidden; visibilitychange polls immediately on show
     if (document.hidden) return
@@ -335,6 +352,7 @@ export const useAppStore = defineStore('app', () => {
     readerGuide, loadingReader, openGuideReader, closeGuideReader,
     pending, completed, pinned, displayed, completedPercent,
     pollCurrentGame, refreshAchievements, selectAchievement, clearSelectedAchievement,
+    applyLanguageChange,
     togglePinAchievement, togglePinnedGuide, toggleGuideExpand, toggleFocusMode,
     setManualProgressValue, adjustManualProgress, removeManualProgress,
     startPolling, stopPolling
