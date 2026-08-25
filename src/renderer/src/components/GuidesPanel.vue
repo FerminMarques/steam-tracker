@@ -1,10 +1,17 @@
 ﻿<script setup lang="ts">
+import { computed } from "vue";
 import { useAppStore } from "../stores/app";
 import type { Guide } from "../stores/app";
 import Icon from "./Icon.vue";
 import { t } from "../i18n";
 
 const store = useAppStore();
+
+/** 100% guides always first, preserving relevance order within each group */
+const sortedGuides = computed<Guide[]>(() => [
+  ...store.guides.filter((g) => g.is100Percent),
+  ...store.guides.filter((g) => !g.is100Percent),
+]);
 
 function openGuide(url: string) {
   window.steamApi.openUrl(url);
@@ -76,7 +83,7 @@ function looksLikeProgress(desc: string): boolean {
 
     <div v-else class="guides-list">
       <div
-        v-for="guide in store.guides"
+        v-for="guide in sortedGuides"
         :key="guide.id"
         class="guide-card"
         :class="{
@@ -113,7 +120,7 @@ function looksLikeProgress(desc: string): boolean {
               "
               @click.stop="onGuidePinClick($event, guide)"
             >
-              <Icon :name="isGuidePinned(guide) ? 'check' : 'book'" :size="11" />
+              <Icon :name="isGuidePinned(guide) ? 'check' : 'book'" :size="13" />
             </button>
             <span class="guide-link">{{ t("guidesRead") }}</span>
           </div>
@@ -304,21 +311,28 @@ function looksLikeProgress(desc: string): boolean {
   gap: 6px;
 }
 .guide-pin-btn {
-  background: none;
-  border: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   cursor: pointer;
-  font-size: 12px;
-  opacity: 0.3;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  transition: opacity 0.15s, transform 0.1s;
-  line-height: 1;
+  transition: all 0.15s;
 }
 .guide-pin-btn:hover {
-  opacity: 0.7;
-  transform: scale(1.2);
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--surface-hover);
 }
 .guide-pin-btn.active {
-  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
 }
 .guide-votes {
   font-size: 11px;

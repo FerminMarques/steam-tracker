@@ -13,6 +13,7 @@ import { createWindow, focusResize } from './window'
 import { getCurrentGame, getAchievements, getGameArt, resolveVanity } from './steam'
 import { searchWeb } from './search'
 import { fetchGuideContent } from './scrape'
+import type { Guide } from '../shared/types'
 
 app.whenReady().then(() => {
   store.init(app.getPath('userData'))
@@ -142,6 +143,24 @@ app.whenReady().then(() => {
   ipcMain.handle('pinned:set', (_, { appId, pins }: { appId: string; pins: string[] }) => {
     try {
       store.set(`pins_${appId}`, JSON.stringify(pins))
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  // --- Pinned guides persistence ---
+  // Stored per game as JSON: { achApiName: Guide } (content field is never persisted)
+  ipcMain.handle('guidepins:get', (_, appId: string): Record<string, Guide> => {
+    try {
+      return JSON.parse(store.get(`guidepins_${appId}`, '{}'))
+    } catch {
+      return {}
+    }
+  })
+  ipcMain.handle('guidepins:set', (_, { appId, pins }: { appId: string; pins: Record<string, Guide> }) => {
+    try {
+      store.set(`guidepins_${appId}`, JSON.stringify(pins))
       return true
     } catch {
       return false

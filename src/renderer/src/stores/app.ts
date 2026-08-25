@@ -73,7 +73,9 @@ export const useAppStore = defineStore('app', () => {
       // If unpinned, also remove the pinned guide
       const nextGuides = new Map(pinnedGuides.value)
       nextGuides.delete(apiName)
+      expandedGuides.value.delete(apiName)
       pinnedGuides.value = nextGuides
+      persistGuidePins()
     } else {
       next.add(apiName)
     }
@@ -84,6 +86,17 @@ export const useAppStore = defineStore('app', () => {
     if (currentGame.value) {
       window.steamApi.setPinnedAchievements(currentGame.value.appId, [...next])
     }
+  }
+
+  /** Persist pinned guides for the current game (content is stripped) */
+  function persistGuidePins() {
+    if (!currentGame.value) return
+    const plain: Record<string, Guide> = {}
+    for (const [apiName, guide] of pinnedGuides.value) {
+      plain[apiName] = { ...guide }
+      delete plain[apiName].content
+    }
+    window.steamApi.setPinnedGuides(currentGame.value.appId, plain)
   }
 
   function togglePinnedGuide(apiName: string, guide: Guide) {
@@ -97,6 +110,9 @@ export const useAppStore = defineStore('app', () => {
       fetchGuideContent(apiName, guide)
     }
     pinnedGuides.value = next
+    // A pinned guide implies a pinned achievement
+    if (!pinnedAchievements.value.has(apiName)) togglePinAchievement(apiName)
+    persistGuidePins()
   }
 
   async function fetchGuideContent(apiName: string, guide: Guide) {
@@ -113,6 +129,24 @@ export const useAppStore = defineStore('app', () => {
         }
       }
     } catch { /* silent */ }
+  }
+
+  const loadingGuidesContent = ref<Set<string>>(new Set())
+
+  /** Fetch full content for a pinned guide on demand (tracks loading state for spinners) */
+  async function loadPinnedGuideContent(apiName: string) {
+    const guide = pinnedGuides.value.get(apiName)
+    if (!guide || guide.content || loadingGuidesContent.value.has(apiName)) return
+    const nextLoading = new Set(loadingGuidesContent.value)
+    nextLoading.add(apiName)
+    loadingGuidesContent.value = nextLoading
+    try {
+      await fetchGuideContent(apiName, guide)
+    } finally {
+      const done = new Set(loadingGuidesContent.value)
+      done.delete(apiName)
+      loadingGuidesContent.value = done
+    }
   }
 
   function toggleGuideExpand(apiName: string) {
@@ -255,9 +289,18 @@ export const useAppStore = defineStore('app', () => {
           achievements.value = achRes.data ?? []
           achievementsError.value = achRes.error
           await loadManualProgress()
-          // Restore saved pins
+          // Restore saved pins + their guides
           const savedPins = await window.steamApi.getPinnedAchievements(game.appId)
           if (savedPins.length) pinnedAchievements.value = new Set(savedPins)
+          const savedGuides = await window.steamApi.getPinnedGuides(game.appId)
+          const guideEntries = Object.entries(savedGuides)
+          if (guideEntries.length) {
+            pinnedGuides.value = new Map(guideEntries)
+            // Re-fetch full content for each restored guide in the background
+            for (const [apiName, guide] of pinnedGuides.value) {
+              fetchGuideContent(apiName, guide)
+            }
+          }
           // Resolve header art (async, doesn't block the list)
           window.steamApi.getGameArt(game.appId).then((url) => {
             if (currentGame.value?.appId === game.appId && url) currentGameArt.value = url
@@ -333,6 +376,7 @@ export const useAppStore = defineStore('app', () => {
     searchQuery, sortBy, isOnTop, pinnedAchievements, pinnedGuides, focusMode,
     expandedGuides, manualProgress, achievementsError,
     readerGuide, loadingReader, openGuideReader, closeGuideReader,
+    loadingGuidesContent, loadPinnedGuideContent,
     pending, completed, pinned, displayed, completedPercent,
     pollCurrentGame, refreshAchievements, selectAchievement, clearSelectedAchievement,
     togglePinAchievement, togglePinnedGuide, toggleGuideExpand, toggleFocusMode,

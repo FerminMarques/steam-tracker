@@ -36,6 +36,7 @@ const en = {
   achPin: "Pin achievement",
   achStopTracking: "Stop tracking",
   achTrackManually: "Track manually",
+  achHasGuide: "Open pinned guide",
 
   guidesBack: "Back",
   guidesTitle: "Steam Community Guides",
@@ -56,6 +57,7 @@ const en = {
   focusUnpin: "Unpin",
   focusKey: "Key: {key}",
   focusOpenGuide: "Open full guide →",
+  focusHasGuide: "Click to view guide: {title}",
 
   readerOpenBrowser: "Open in browser",
   readerClose: "Close",
@@ -151,6 +153,7 @@ const es: Record<MessageKey, string> = {
   achPin: "Fijar logro",
   achStopTracking: "Dejar de registrar",
   achTrackManually: "Registrar manualmente",
+  achHasGuide: "Abrir guía fijada",
 
   guidesBack: "Volver",
   guidesTitle: "Guías de la comunidad de Steam",
@@ -171,6 +174,7 @@ const es: Record<MessageKey, string> = {
   focusUnpin: "Quitar",
   focusKey: "Tecla: {key}",
   focusOpenGuide: "Abrir guía completa →",
+  focusHasGuide: "Clic para ver la guía: {title}",
 
   readerOpenBrowser: "Abrir en navegador",
   readerClose: "Cerrar",

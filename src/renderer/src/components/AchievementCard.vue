@@ -51,6 +51,17 @@ function descMax(): number | null {
 }
 
 const mp = computed(() => store.manualProgress.get(props.achievement.apiName));
+const pinnedGuide = computed(() =>
+  store.pinnedAchievements.has(props.achievement.apiName)
+    ? store.pinnedGuides.get(props.achievement.apiName)
+    : undefined,
+);
+
+function openPinnedGuide(e: MouseEvent) {
+  e.stopPropagation();
+  if (!pinnedGuide.value) return;
+  store.openGuideReader(pinnedGuide.value);
+}
 const hasAutoProgress = computed(
   () => !props.achievement.achieved && props.achievement.currentProgress !== null && props.achievement.maxProgress
 );
@@ -189,6 +200,14 @@ function removeProgress(e: MouseEvent) {
       </div>
     </div>
     <div class="ach-status">
+      <button
+        v-if="pinnedGuide"
+        class="guide-ind-btn"
+        :title="`${t('achHasGuide')}: ${pinnedGuide.title}`"
+        @click="openPinnedGuide($event)"
+      >
+        <Icon name="book" :size="11" />
+      </button>
       <button
         class="pin-btn"
         :class="{ pinned: store.pinnedAchievements.has(achievement.apiName) }"
@@ -376,6 +395,23 @@ function removeProgress(e: MouseEvent) {
   flex-direction: column;
   align-items: center;
   gap: 3px;
+}
+.guide-ind-btn {
+  background: none;
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.12s;
+}
+.guide-ind-btn:hover {
+  background: var(--accent-soft);
 }
 .pin-btn {
   background: none;

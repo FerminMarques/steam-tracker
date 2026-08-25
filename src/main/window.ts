@@ -1,4 +1,4 @@
-import { BrowserWindow, shell } from 'electron'
+import { BrowserWindow, screen, shell } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { store } from './store'
@@ -49,9 +49,12 @@ export function focusResize(e: Electron.IpcMainEvent, { active, count, height }:
   if (active) {
     // Compact focus mode — prefer the renderer-measured content height
     const fallback = Math.min(400, 28 + count * 42 + Math.max(0, count - 1) * 2 + 12)
-    const h = Math.max(120, Math.min(height ?? fallback, 600))
+    // Allow the window to grow with expanded guides (capped at 85% of the work area)
+    const maxH = Math.floor(screen.getPrimaryDisplay().workAreaSize.height * 0.85)
+    const h = Math.max(120, Math.min(height ?? fallback, maxH))
     win.setMinimumSize(280, 80)
-    win.setSize(380, h + 2, true)
+    // No animate: instant resize so expanded guide content appears directly
+    win.setSize(380, h + 2)
   } else {
     win.setMinimumSize(380, 500)
     win.setSize(440, 680, true)

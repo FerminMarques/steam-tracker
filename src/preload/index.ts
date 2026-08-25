@@ -56,6 +56,10 @@ const steamApi = {
     ipcRenderer.invoke('pinned:get', appId),
   setPinnedAchievements: (appId: string, pins: string[]): Promise<boolean> =>
     ipcRenderer.invoke('pinned:set', { appId, pins }),
+  getPinnedGuides: (appId: string): Promise<Record<string, Guide>> =>
+    ipcRenderer.invoke('guidepins:get', appId),
+  setPinnedGuides: (appId: string, pins: Record<string, Guide>): Promise<boolean> =>
+    ipcRenderer.invoke('guidepins:set', { appId, pins }),
   getManualProgress: (appId: string): Promise<Record<string, { current: number; max: number }>> =>
     ipcRenderer.invoke('manual-progress:get', appId),
   setManualProgress: (appId: string, achApiName: string, current: number, max: number): Promise<boolean> =>

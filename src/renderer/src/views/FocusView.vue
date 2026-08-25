@@ -1,7 +1,8 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useAppStore } from "../stores/app";
 import type { Achievement } from "../stores/app";
+import GuideContent from "../components/GuideContent.vue";
 import { t } from "../i18n";
 
 const store = useAppStore();
@@ -10,8 +11,23 @@ let removeProgressListener: (() => void) | null = null;
 
 // Measure real content height so the window always fits the pinned rows
 const viewRef = ref<HTMLElement | null>(null);
+const listRef = ref<HTMLElement | null>(null);
 let resizeObserver: ResizeObserver | null = null;
 let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Desired full-content height: chrome around the list + the list's full scroll extent.
+ *  Measuring scrollHeight (not offsetHeight) avoids the +2px feedback loop that
+ *  revealed content bit by bit while the window grew. */
+function requestResize() {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const view = viewRef.value;
+    const list = listRef.value;
+    if (!view || !list) return;
+    const h = view.offsetHeight - list.clientHeight + list.scrollHeight;
+    if (h > 0) window.steamApi.resizeFocus(true, store.pinned.length, h);
+  }, 60);
+}
 
 onMounted(async () => {
   const keys = await window.steamApi.getProgressKeys();
@@ -26,16 +42,12 @@ onMounted(async () => {
     }
   });
 
-  resizeObserver = new ResizeObserver(() => {
-    // Debounce: guide expansion animates height over several frames
-    if (resizeTimer) clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      const h = viewRef.value?.offsetHeight ?? 0;
-      if (h > 0) window.steamApi.resizeFocus(true, store.pinned.length, h);
-    }, 60);
-  });
+  resizeObserver = new ResizeObserver(() => requestResize());
   if (viewRef.value) resizeObserver.observe(viewRef.value);
 });
+
+// Guide content arrives async (prefetch/on-demand) — re-measure when it lands
+watch(() => store.pinnedGuides, () => nextTick(requestResize));
 
 onUnmounted(() => {
   removeProgressListener?.();
@@ -45,14 +57,25 @@ onUnmounted(() => {
 
 function handleRowClick(ach: Achievement) {
   const pinnedGuide = store.pinnedGuides.get(ach.apiName);
-  if (pinnedGuide?.content) {
-    store.toggleGuideExpand(ach.apiName);
-  } else if (pinnedGuide) {
-    window.steamApi.openUrl(pinnedGuide.url);
-  } else {
+  if (!pinnedGuide) {
     store.focusMode = false;
     store.selectAchievement(ach);
+    return;
   }
+  // No content yet — fetch it now so the guide appears as soon as it's ready
+  if (!pinnedGuide.content) store.loadPinnedGuideContent(ach.apiName);
+  store.toggleGuideExpand(ach.apiName);
+  // ResizeObserver can't see inside the scroll list — resize explicitly on expand/collapse
+  nextTick(requestResize);
+}
+
+function rowTitle(ach: Achievement): string {
+  const guide = store.pinnedGuides.get(ach.apiName);
+  return guide ? t("focusHasGuide", { title: guide.title }) : "";
+}
+
+function guideContent(ach: Achievement): string {
+  return store.pinnedGuides.get(ach.apiName)?.content ?? "";
 }
 
 function openGuide(ach: Achievement) {
@@ -82,7 +105,7 @@ function hasAutoProgress(ach: Achievement) {
     </div>
 
     <!-- Achievement rows -->
-    <div class="focus-list">
+    <div ref="listRef" class="focus-list">
       <div
         v-for="ach in store.pinned"
         :key="ach.apiName"
@@ -91,6 +114,7 @@ function hasAutoProgress(ach: Achievement) {
         <div
           class="focus-row"
           :class="{ 'has-guide': !!store.pinnedGuides.get(ach.apiName) }"
+          :title="rowTitle(ach)"
           @click="handleRowClick(ach)"
         >
           <img
@@ -142,11 +166,21 @@ function hasAutoProgress(ach: Achievement) {
 
         <!-- Expanded guide content -->
         <div
-          v-if="store.expandedGuides.has(ach.apiName) && store.pinnedGuides.get(ach.apiName)?.content"
+          v-if="store.expandedGuides.has(ach.apiName) && store.pinnedGuides.get(ach.apiName)"
           class="focus-guide-content"
           @click.stop
         >
-          <pre class="guide-text">{{ store.pinnedGuides.get(ach.apiName)!.content }}</pre>
+          <div
+            v-if="!store.pinnedGuides.get(ach.apiName)!.content"
+            class="guide-loading"
+          >
+            <div class="spinner"></div>
+            <span>{{ t("readerLoading") }}</span>
+          </div>
+          <GuideContent
+            v-else
+            :content="guideContent(ach)"
+          />
           <button
             class="guide-open-btn"
             @click="openGuide(ach)"
@@ -327,20 +361,19 @@ function hasAutoProgress(ach: Achievement) {
   border: 1px solid var(--border);
   border-radius: 0 0 8px 8px;
   -webkit-app-region: no-drag;
-  max-height: 280px;
-  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.guide-text {
-  font-family: inherit;
-  font-size: 12px;
-  line-height: 1.6;
+.guide-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 0;
   color: var(--text-secondary);
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin: 0;
+  font-size: 12px;
 }
 .guide-open-btn {
   align-self: flex-start;

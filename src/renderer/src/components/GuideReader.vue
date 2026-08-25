@@ -1,30 +1,10 @@
 <script setup lang="ts">
-import { computed } from "vue";
 import { useAppStore } from "../stores/app";
 import Icon from "./Icon.vue";
+import GuideContent from "./GuideContent.vue";
 import { t } from "../i18n";
 
 const store = useAppStore();
-
-interface Block {
-  type: "h" | "p" | "li";
-  text: string;
-}
-
-/** Render guide text: "## " lines as headings, "• " as bullets, rest as paragraphs.
- *  Normalizes inline "##" markers (generic extraction may not break lines). */
-const blocks = computed<Block[]>(() => {
-  const out: Block[] = [];
-  const raw = (store.readerGuide?.content ?? "").replace(/\s*##\s*/g, "\n## ");
-  for (const line of raw.split("\n")) {
-    const txt = line.trim();
-    if (!txt) continue;
-    if (txt.startsWith("## ")) out.push({ type: "h", text: txt.slice(3) });
-    else if (txt.startsWith("•")) out.push({ type: "li", text: txt.replace(/^•\s*/, "") });
-    else out.push({ type: "p", text: txt });
-  }
-  return out;
-});
 
 function openExternal() {
   if (store.readerGuide) window.steamApi.openUrl(store.readerGuide.url);
@@ -43,20 +23,14 @@ function openExternal() {
           </div>
         </div>
         <div class="reader-body">
-          <div v-if="store.loadingReader && !blocks.length" class="reader-loading">
+          <div v-if="store.loadingReader && !store.readerGuide.content" class="reader-loading">
             <div class="spinner"></div>
             <span>{{ t("readerLoading") }}</span>
           </div>
-          <template v-else>
-            <component
-              :is="b.type === 'h' ? 'h3' : b.type === 'li' ? 'div' : 'p'"
-              v-for="(b, i) in blocks"
-              :key="i"
-              :class="b.type === 'h' ? 'r-h' : b.type === 'li' ? 'r-li' : 'r-p'"
-            >
-              <span v-if="b.type === 'li'" class="r-bullet">•</span>{{ b.text }}
-            </component>
-          </template>
+          <GuideContent
+            v-else
+            :content="store.readerGuide.content"
+          />
         </div>
         <div class="reader-footer">
           <button class="reader-open-ext" @click="openExternal">{{ t("readerOpenBrowserFooter") }}</button>
@@ -144,36 +118,6 @@ function openExternal() {
   gap: 10px;
   color: var(--text-secondary);
   font-size: 13px;
-}
-.r-h {
-  margin: 10px 0 0;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--accent-border);
-}
-.r-p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.65;
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-}
-.r-li {
-  margin: 0;
-  padding-left: 14px;
-  position: relative;
-  font-size: 12px;
-  line-height: 1.65;
-  color: var(--text-secondary);
-}
-.r-bullet {
-  position: absolute;
-  left: 2px;
-  color: var(--accent);
 }
 .reader-footer {
   padding: 8px 12px;

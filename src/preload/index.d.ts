@@ -31,6 +31,8 @@ export interface SteamApi {
   onFocusToggle(cb: () => void): () => void
   getPinnedAchievements(appId: string): Promise<string[]>
   setPinnedAchievements(appId: string, pins: string[]): Promise<boolean>
+  getPinnedGuides(appId: string): Promise<Record<string, Guide>>
+  setPinnedGuides(appId: string, pins: Record<string, Guide>): Promise<boolean>
   getManualProgress(appId: string): Promise<Record<string, { current: number; max: number }>>
   setManualProgress(appId: string, achApiName: string, current: number, max: number): Promise<boolean>
   deleteManualProgress(appId: string, achApiName: string): Promise<boolean>
