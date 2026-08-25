@@ -63,6 +63,7 @@ const en = {
   readerClose: "Close",
   readerLoading: "Loading guide…",
   readerOpenBrowserFooter: "Open in browser ↗",
+  panelKeepOpen: "Keep open when leaving focus mode",
 
   settingsTitle: "Settings",
   settingsOverlayHotkey: "Overlay Hotkey",
@@ -180,6 +181,7 @@ const es: Record<MessageKey, string> = {
   readerClose: "Cerrar",
   readerLoading: "Cargando guía…",
   readerOpenBrowserFooter: "Abrir en navegador ↗",
+  panelKeepOpen: "Mantener abierta al salir del modo enfoque",
 
   settingsTitle: "Ajustes",
   settingsOverlayHotkey: "Atajo del overlay",

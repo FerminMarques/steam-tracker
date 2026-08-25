@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { Achievement, Guide } from '@shared/types'
 
 export type { Achievement, Guide }
@@ -35,6 +35,9 @@ export const useAppStore = defineStore('app', () => {
   // Integrated guide reader state
   const readerGuide = ref<{ title: string; url: string; content: string } | null>(null)
   const loadingReader = ref(false)
+  // Separate guide panel window state (main window side)
+  const guidePanelOpen = ref(false)
+  const guidePanelUrl = ref<string | null>(null)
 
   function filterAndSort(list: Achievement[]): Achievement[] {
     let result = list
@@ -81,7 +84,10 @@ export const useAppStore = defineStore('app', () => {
     }
     pinnedAchievements.value = next
     // If no pins remain, exit focus mode
-    if (next.size === 0) focusMode.value = false
+    if (next.size === 0) {
+      focusMode.value = false
+      onFocusModeOff()
+    }
     // Persist pins for this game
     if (currentGame.value) {
       window.steamApi.setPinnedAchievements(currentGame.value.appId, [...next])
@@ -99,8 +105,13 @@ export const useAppStore = defineStore('app', () => {
     window.steamApi.setPinnedGuides(currentGame.value.appId, plain)
   }
 
-  function togglePinnedGuide(apiName: string, guide: Guide) {
-    const next = new Map(pinnedGuides.value)
+// Video sites never yield readable text; guide *listing*/search pages are navigation, not content
+const NON_READABLE_URL_RE = /youtube\.com|youtu\.be|steamcommunity\.com\/app\/[^/]+\/guides\/?(\?|$)/i
+
+function togglePinnedGuide(apiName: string, guide: Guide) {
+  // Search/listing fallback links can't be scraped — don't allow pinning them
+  if (NON_READABLE_URL_RE.test(guide.url)) return
+  const next = new Map(pinnedGuides.value)
     if (next.get(apiName)?.id === guide.id) {
       next.delete(apiName)
       expandedGuides.value.delete(apiName)
@@ -158,10 +169,8 @@ export const useAppStore = defineStore('app', () => {
 
   /** Open the full guide in the integrated reader (cached per URL) */
   async function openGuideReader(guide: Guide) {
-    // Video sites never yield readable text — go straight to the browser.
-    // Guide *listing* pages are navigation, not content — also browser.
-    if (/youtube\.com|youtu\.be/i.test(guide.url) || /steamcommunity\.com\/app\/[^/]+\/guides\/?(\?|$)/i.test(guide.url)) {
-      window.steamApi.openUrl(guide.url)
+    // Video sites / guide listing pages never yield readable text — go to the browser
+    if (NON_READABLE_URL_RE.test(guide.url)) {      window.steamApi.openUrl(guide.url)
       return
     }
     const cached = _fullGuideCache.get(guide.url)
@@ -191,6 +200,38 @@ export const useAppStore = defineStore('app', () => {
   function closeGuideReader() {
     readerGuide.value = null
   }
+
+  /** Open (or update) the separate guide panel window for a pinned guide */
+  function openGuidePanel(apiName: string) {
+    const guide = pinnedGuides.value.get(apiName)
+    if (!guide) return
+    if (!guide.content) loadPinnedGuideContent(apiName)
+    guidePanelOpen.value = true
+    guidePanelUrl.value = guide.url
+    window.steamApi.openGuidePanel({
+      title: guide.title,
+      url: guide.url,
+      content: guide.content ?? ''
+    })
+  }
+
+  // Push content updates to the panel while it shows this guide (async fetch landing)
+  watch(pinnedGuides, () => {
+    if (!guidePanelOpen.value || !guidePanelUrl.value) return
+    for (const guide of pinnedGuides.value.values()) {
+      if (guide.url === guidePanelUrl.value) {
+        window.steamApi.updateGuidePanel({
+          title: guide.title,
+          url: guide.url,
+          content: guide.content ?? ''
+        })
+      }
+    }
+  })
+  window.steamApi.onGuidePanelClosed(() => {
+    guidePanelOpen.value = false
+    guidePanelUrl.value = null
+  })
 
   /** Load manual progress for the current game */
   async function loadManualProgress() {
@@ -229,9 +270,15 @@ export const useAppStore = defineStore('app', () => {
     manualProgress.value = next
   }
 
+  /** Close the guide panel if it isn't sticky (called whenever focus mode turns off) */
+  function onFocusModeOff() {
+    window.steamApi.notifyFocusExited()
+  }
+
   function toggleFocusMode() {
     if (pinnedAchievements.value.size > 0) {
       focusMode.value = !focusMode.value
+      if (!focusMode.value) onFocusModeOff()
     }
   }
 
@@ -279,7 +326,9 @@ export const useAppStore = defineStore('app', () => {
       achievements.value = []
       pinnedAchievements.value = new Set()
       pinnedGuides.value = new Map()
+      const wasFocus = focusMode.value
       focusMode.value = false
+      if (wasFocus) onFocusModeOff()
       pollCount.value = 0
 
       if (game) {
@@ -376,6 +425,7 @@ export const useAppStore = defineStore('app', () => {
     searchQuery, sortBy, isOnTop, pinnedAchievements, pinnedGuides, focusMode,
     expandedGuides, manualProgress, achievementsError,
     readerGuide, loadingReader, openGuideReader, closeGuideReader,
+    guidePanelOpen, openGuidePanel,
     loadingGuidesContent, loadPinnedGuideContent,
     pending, completed, pinned, displayed, completedPercent,
     pollCurrentGame, refreshAchievements, selectAchievement, clearSelectedAchievement,

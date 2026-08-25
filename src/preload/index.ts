@@ -60,6 +60,26 @@ const steamApi = {
     ipcRenderer.invoke('guidepins:get', appId),
   setPinnedGuides: (appId: string, pins: Record<string, Guide>): Promise<boolean> =>
     ipcRenderer.invoke('guidepins:set', { appId, pins }),
+  openGuidePanel: (payload: { title: string; url: string; content: string }): void =>
+    ipcRenderer.send('guide-panel:open', payload),
+  updateGuidePanel: (payload: { title: string; url: string; content: string }): void =>
+    ipcRenderer.send('guide-panel:update', payload),
+  getGuidePanelData: (): Promise<{ title: string; url: string; content: string } | null> =>
+    ipcRenderer.invoke('guide-panel:get-data'),
+  getGuidePanelSticky: (): Promise<boolean> => ipcRenderer.invoke('guide-panel:get-sticky'),
+  setGuidePanelSticky: (val: boolean): void => ipcRenderer.send('guide-panel:set-sticky', val),
+  notifyFocusExited: (): void => ipcRenderer.send('guide-panel:focus-exited'),
+  closeGuidePanel: (): void => ipcRenderer.send('guide-panel:close'),
+  onGuidePanelData: (cb: (data: { title: string; url: string; content: string }) => void): (() => void) => {
+    const handler = (_: Electron.IpcRendererEvent, data: { title: string; url: string; content: string }) => cb(data)
+    ipcRenderer.on('guide-panel:data', handler)
+    return () => ipcRenderer.off('guide-panel:data', handler)
+  },
+  onGuidePanelClosed: (cb: () => void): (() => void) => {
+    const handler = () => cb()
+    ipcRenderer.on('guide-panel:closed', handler)
+    return () => ipcRenderer.off('guide-panel:closed', handler)
+  },
   getManualProgress: (appId: string): Promise<Record<string, { current: number; max: number }>> =>
     ipcRenderer.invoke('manual-progress:get', appId),
   setManualProgress: (appId: string, achApiName: string, current: number, max: number): Promise<boolean> =>

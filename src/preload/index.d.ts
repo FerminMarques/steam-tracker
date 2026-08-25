@@ -33,6 +33,15 @@ export interface SteamApi {
   setPinnedAchievements(appId: string, pins: string[]): Promise<boolean>
   getPinnedGuides(appId: string): Promise<Record<string, Guide>>
   setPinnedGuides(appId: string, pins: Record<string, Guide>): Promise<boolean>
+  openGuidePanel(payload: { title: string; url: string; content: string }): void
+  updateGuidePanel(payload: { title: string; url: string; content: string }): void
+  getGuidePanelData(): Promise<{ title: string; url: string; content: string } | null>
+  getGuidePanelSticky(): Promise<boolean>
+  setGuidePanelSticky(val: boolean): void
+  notifyFocusExited(): void
+  closeGuidePanel(): void
+  onGuidePanelData(cb: (data: { title: string; url: string; content: string }) => void): () => void
+  onGuidePanelClosed(cb: () => void): () => void
   getManualProgress(appId: string): Promise<Record<string, { current: number; max: number }>>
   setManualProgress(appId: string, achApiName: string, current: number, max: number): Promise<boolean>
   deleteManualProgress(appId: string, achApiName: string): Promise<boolean>

@@ -13,6 +13,7 @@ import { createWindow, focusResize } from './window'
 import { getCurrentGame, getAchievements, getGameArt, resolveVanity } from './steam'
 import { searchWeb } from './search'
 import { fetchGuideContent } from './scrape'
+import { openGuidePanel, updateGuidePanel, closeGuidePanel, getGuidePanelData, isGuidePanelSticky, setGuidePanelSticky, onGuidePanelFocusExited } from './guidePanel'
 import type { Guide } from '../shared/types'
 
 app.whenReady().then(() => {
@@ -198,6 +199,18 @@ app.whenReady().then(() => {
       return false
     }
   })
+
+  // --- Guide panel window (separate resizable/draggable panel) ---
+  ipcMain.on('guide-panel:open', (e, data) => {
+    const parent = BrowserWindow.fromWebContents(e.sender)
+    if (parent) openGuidePanel(parent, data)
+  })
+  ipcMain.on('guide-panel:update', (_, data) => updateGuidePanel(data))
+  ipcMain.handle('guide-panel:get-data', () => getGuidePanelData())
+  ipcMain.handle('guide-panel:get-sticky', () => isGuidePanelSticky())
+  ipcMain.on('guide-panel:set-sticky', (_, val: boolean) => setGuidePanelSticky(val))
+  ipcMain.on('guide-panel:focus-exited', () => onGuidePanelFocusExited())
+  ipcMain.on('guide-panel:close', () => closeGuidePanel())
 
   // --- Fetch guide content ---
   ipcMain.handle('fetch:guide-content', (_, { url, achievementName, full }: { url: string; achievementName: string; full?: boolean }) =>
