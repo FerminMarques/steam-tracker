@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { t, setUiLanguage, isExperimentalUi } from "../i18n";
 
 const emit = defineEmits<{ configured: [] }>();
 
@@ -42,10 +43,11 @@ onMounted(async () => {
   const cfg = await window.steamApi.getConfig();
   if (cfg.apiKey) apiKey.value = cfg.apiKey;
   if (cfg.language) language.value = cfg.language;
+  setUiLanguage(cfg.language);
   if (cfg.steamId) {
     steamIdInput.value = cfg.steamId;
     steamId.value = cfg.steamId;
-    resolveHint.value = `✓ Steam ID: ${cfg.steamId}`;
+    resolveHint.value = t("setupSteamIdIs", { id: cfg.steamId });
   }
 });
 
@@ -66,7 +68,7 @@ async function resolveInput() {
     .replace(/^https?:\/\/steamcommunity\.com\/id\//i, "")
     .replace(/\/$/, "");
   if (!apiKey.value.trim()) {
-    error.value = "Enter your API key first to resolve a username.";
+    error.value = t("setupEnterApiKeyFirst");
     return;
   }
   resolving.value = true;
@@ -80,11 +82,9 @@ async function resolveInput() {
     if (res.success && res.steamId) {
       steamId.value = res.steamId;
       steamIdInput.value = res.steamId;
-      resolveHint.value = `✓ Resolved: ${res.steamId}`;
+      resolveHint.value = t("setupResolved", { id: res.steamId });
     } else {
-      error.value =
-        res.error ??
-        "Username not found. Try pasting your Steam ID64 directly.";
+      error.value = res.error ?? t("setupUsernameNotFound");
     }
   } finally {
     resolving.value = false;
@@ -120,7 +120,7 @@ async function save() {
     if (!isSteamId64(steamId.value)) return; // resolve failed
   }
   if (!apiKey.value.trim()) {
-    error.value = "API key is required.";
+    error.value = t("setupApiKeyRequired");
     return;
   }
   saving.value = true;
@@ -130,11 +130,12 @@ async function save() {
       steamId: steamId.value,
       language: language.value,
     });
+    setUiLanguage(language.value);
     const ok = await window.steamApi.setHotkey(hotkey.value);
-    if (!ok) hotkeyError.value = "Hotkey already in use, kept previous.";
+    if (!ok) hotkeyError.value = t("settingsHotkeyInUse");
     emit("configured");
   } catch {
-    error.value = "Failed to save configuration.";
+    error.value = t("setupSaveFailed");
   } finally {
     saving.value = false;
   }
@@ -150,34 +151,32 @@ function openApiKeyPage() {
     <div class="setup-hero">
       <div class="hero-icon">◆</div>
       <h1 class="hero-title">Achivio</h1>
-      <p class="hero-sub">
-        Track your Steam achievements and find guides while you play
-      </p>
+      <p class="hero-sub">{{ t("appTagline") }}</p>
     </div>
 
     <div class="setup-form">
       <div class="form-group">
-        <label class="form-label">Steam Web API Key</label>
+        <label class="form-label">{{ t("setupApiKeyLabel") }}</label>
         <input
           v-model="apiKey"
           type="password"
           class="form-input"
-          placeholder="Paste your API key here"
+          :placeholder="t('setupApiKeyPlaceholder')"
           @keyup.enter="save"
         />
         <button class="help-link" type="button" @click="openApiKeyPage">
-          Get your free API key →
+          {{ t("setupGetApiKey") }}
         </button>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Your Steam ID or Username</label>
+        <label class="form-label">{{ t("setupSteamIdLabel") }}</label>
         <div class="resolve-row">
           <input
             v-model="steamIdInput"
             type="text"
             class="form-input"
-            placeholder="Username or 76561198..."
+            :placeholder="t('setupSteamIdPlaceholder')"
             @keyup.enter="resolveInput"
             @blur="resolveInput"
           />
@@ -191,25 +190,24 @@ function openApiKeyPage() {
           </button>
         </div>
         <p v-if="resolveHint" class="form-ok">{{ resolveHint }}</p>
-        <p class="form-hint">
-          Enter your Steam username — we'll resolve it automatically
-        </p>
+        <p class="form-hint">{{ t("setupUsernameHint") }}</p>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Language</label>
+        <label class="form-label">{{ t("settingsLanguage") }}</label>
         <select v-model="language" class="form-input form-select">
           <option v-for="lang in LANGUAGES" :key="lang.value" :value="lang.value">
             {{ lang.label }}
           </option>
         </select>
-        <p class="form-hint">
-          Achievements and guide searches will use this language
+        <p class="form-hint">{{ t("setupLanguageHint") }}</p>
+        <p v-if="isExperimentalUi(language)" class="form-warn">
+          ⚠ {{ t("settingsAiNotice") }}
         </p>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Toggle Overlay Hotkey</label>
+        <label class="form-label">{{ t("setupHotkeyLabel") }}</label>
         <div
           class="hotkey-input"
           :class="{ recording: recordingHotkey }"
@@ -219,7 +217,7 @@ function openApiKeyPage() {
           @blur="recordingHotkey = false"
         >
           <span v-if="recordingHotkey" class="recording-hint"
-            >Press your shortcut now...</span
+            >{{ t("setupPressShortcutNow") }}</span
           >
           <span v-else class="hotkey-value">{{ hotkeyDisplay }}</span>
           <span class="hotkey-edit-icon">{{
@@ -227,20 +225,16 @@ function openApiKeyPage() {
           }}</span>
         </div>
         <p v-if="hotkeyError" class="form-warn">⚠ {{ hotkeyError }}</p>
-        <p class="form-hint">
-          Press this anywhere to show/hide the overlay while gaming
-        </p>
+        <p class="form-hint">{{ t("setupHotkeyHint") }}</p>
       </div>
 
       <p v-if="error" class="form-error">⚠ {{ error }}</p>
 
       <button class="save-btn" :disabled="saving" @click="save">
-        {{ saving ? "Saving..." : "Save & Start Tracking" }}
+        {{ saving ? t("setupSaving") : t("setupSaveStart") }}
       </button>
 
-      <p class="privacy-note">
-        Your API key is stored locally on your PC and never shared.
-      </p>
+      <p class="privacy-note">{{ t("setupPrivacyNote") }}</p>
     </div>
   </div>
 </template>

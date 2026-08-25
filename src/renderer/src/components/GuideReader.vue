@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useAppStore } from "../stores/app";
 import Icon from "./Icon.vue";
+import { t } from "../i18n";
 
 const store = useAppStore();
 
@@ -16,11 +17,11 @@ const blocks = computed<Block[]>(() => {
   const out: Block[] = [];
   const raw = (store.readerGuide?.content ?? "").replace(/\s*##\s*/g, "\n## ");
   for (const line of raw.split("\n")) {
-    const t = line.trim();
-    if (!t) continue;
-    if (t.startsWith("## ")) out.push({ type: "h", text: t.slice(3) });
-    else if (t.startsWith("•")) out.push({ type: "li", text: t.replace(/^•\s*/, "") });
-    else out.push({ type: "p", text: t });
+    const txt = line.trim();
+    if (!txt) continue;
+    if (txt.startsWith("## ")) out.push({ type: "h", text: txt.slice(3) });
+    else if (txt.startsWith("•")) out.push({ type: "li", text: txt.replace(/^•\s*/, "") });
+    else out.push({ type: "p", text: txt });
   }
   return out;
 });
@@ -37,14 +38,14 @@ function openExternal() {
         <div class="reader-header">
           <span class="reader-title">{{ store.readerGuide.title }}</span>
           <div class="reader-header-actions">
-            <button class="reader-ext-btn" title="Open in browser" @click="openExternal"><Icon name="external" :size="13" /></button>
-            <button class="reader-close" title="Close" @click="store.closeGuideReader()"><Icon name="close" :size="12" /></button>
+            <button class="reader-ext-btn" :title="t('readerOpenBrowser')" @click="openExternal"><Icon name="external" :size="13" /></button>
+            <button class="reader-close" :title="t('readerClose')" @click="store.closeGuideReader()"><Icon name="close" :size="12" /></button>
           </div>
         </div>
         <div class="reader-body">
           <div v-if="store.loadingReader && !blocks.length" class="reader-loading">
             <div class="spinner"></div>
-            <span>Loading guide…</span>
+            <span>{{ t("readerLoading") }}</span>
           </div>
           <template v-else>
             <component
@@ -58,7 +59,7 @@ function openExternal() {
           </template>
         </div>
         <div class="reader-footer">
-          <button class="reader-open-ext" @click="openExternal">Open in browser ↗</button>
+          <button class="reader-open-ext" @click="openExternal">{{ t("readerOpenBrowserFooter") }}</button>
         </div>
       </div>
     </div>

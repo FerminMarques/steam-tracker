@@ -4,6 +4,7 @@ import { useAppStore } from "../stores/app";
 import AchievementCard from "../components/AchievementCard.vue";
 import GuidesPanel from "../components/GuidesPanel.vue";
 import Icon from "../components/Icon.vue";
+import { t } from "../i18n";
 
 const store = useAppStore();
 // Avoids vue-tsc narrowing `selectedAchievement` to null inside the v-else branch
@@ -44,7 +45,7 @@ onUnmounted(() => store.stopPolling());
         </div>
         <button
           class="refresh-btn"
-          title="Refresh achievements"
+          :title="t('dashRefreshAchievements')"
           @click="store.refreshAchievements()"
         >
           <Icon name="refresh" :size="13" />
@@ -53,20 +54,21 @@ onUnmounted(() => store.stopPolling());
       <div v-else class="no-game">
         <div class="no-game-icon"><Icon name="gamepad" :size="26" /></div>
         <div class="no-game-text">
-          <div class="no-game-title">No game detected</div>
-          <div class="no-game-sub">Launch a Steam game to start tracking</div>
+          <div class="no-game-title">{{ t("dashNoGame") }}</div>
+          <div class="no-game-sub">{{ t("dashLaunchGame") }}</div>
         </div>
         <button
           class="refresh-btn"
-          title="Check now"
+          :title="t('dashCheckNow')"
           @click="store.pollCurrentGame()"
         >
           <Icon name="refresh" :size="13" />
         </button>
       </div>
       <div class="borderless-tip">
-        For the overlay to work in-game, set your game to
-        <strong>Borderless Windowed</strong> mode
+        {{ t("dashBorderlessTip1") }}
+        <strong>Borderless Windowed</strong>
+        {{ t("dashBorderlessTip2") }}
       </div>
     </div>
 
@@ -85,14 +87,14 @@ onUnmounted(() => store.stopPolling());
         <!-- Loading state -->
         <div v-if="store.loadingAchievements" class="center-state">
           <div class="spinner"></div>
-          <span>Loading achievements...</span>
+          <span>{{ t("dashLoading") }}</span>
         </div>
 
         <!-- No game / no achievements -->
         <div v-else-if="!store.currentGame" class="center-state">
           <div class="idle-icon"><Icon name="clock" :size="30" /></div>
-          <p>Waiting for a Steam game to launch...</p>
-          <p class="idle-sub">The app checks every 30 seconds</p>
+          <p>{{ t("dashWaiting") }}</p>
+          <p class="idle-sub">{{ t("dashChecksEvery") }}</p>
         </div>
 
         <div
@@ -100,7 +102,7 @@ onUnmounted(() => store.stopPolling());
           class="center-state"
         >
           <div class="idle-icon"><Icon name="trophy" :size="30" /></div>
-          <p>This game has no achievements</p>
+          <p>{{ t("dashNoAchievements") }}</p>
         </div>
 
         <!-- Achievements list with tabs -->
@@ -112,7 +114,7 @@ onUnmounted(() => store.stopPolling());
               :class="{ active: store.activeTab === 'pinned' }"
               @click="store.activeTab = 'pinned'"
             >
-              Pinned
+              {{ t("tabPinned") }}
               <span class="tab-count">{{ store.pinnedAchievements.size }}</span>
             </button>
             <button
@@ -120,7 +122,7 @@ onUnmounted(() => store.stopPolling());
               :class="{ active: store.activeTab === 'pending' }"
               @click="store.activeTab = 'pending'"
             >
-              Pending
+              {{ t("tabPending") }}
               <span class="tab-count">{{ store.pending.length }}</span>
             </button>
             <button
@@ -128,7 +130,7 @@ onUnmounted(() => store.stopPolling());
               :class="{ active: store.activeTab === 'completed' }"
               @click="store.activeTab = 'completed'"
             >
-              Completed
+              {{ t("tabCompleted") }}
               <span class="tab-count">{{ store.completed.length }}</span>
             </button>
             <button
@@ -136,14 +138,14 @@ onUnmounted(() => store.stopPolling());
               :class="{ active: store.activeTab === 'all' }"
               @click="store.activeTab = 'all'"
             >
-              All
+              {{ t("tabAll") }}
               <span class="tab-count">{{ store.achievements.length }}</span>
             </button>
           </div>
 
           <div v-if="!store.displayed.length" class="center-state">
             <div class="idle-icon"><Icon name="star" :size="30" /></div>
-            <p>All achievements completed!</p>
+            <p>{{ t("dashAllCompleted") }}</p>
           </div>
 
           <!-- Search + Sort bar -->
@@ -152,12 +154,12 @@ onUnmounted(() => store.stopPolling());
             <input
               v-model="store.searchQuery"
               class="search-input"
-              placeholder="Search achievements..."
+              :placeholder="t('dashSearchPlaceholder')"
               type="text"
             />
             <select v-model="store.sortBy" class="sort-select">
-              <option value="default">Default</option>
-              <option value="rarity">Rarest first</option>
+              <option value="default">{{ t("sortDefault") }}</option>
+              <option value="rarity">{{ t("sortRarity") }}</option>
               <option value="name">A → Z</option>
             </select>
           </div>
@@ -166,7 +168,7 @@ onUnmounted(() => store.stopPolling());
             v-if="store.displayed.length === 0 && store.searchQuery"
             class="center-state"
           >
-            <p>No achievements match "{{ store.searchQuery }}"</p>
+            <p>{{ t("dashNoMatch", { query: store.searchQuery }) }}</p>
           </div>
 
           <div v-else class="ach-list">

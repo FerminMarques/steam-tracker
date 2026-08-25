@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { useAppStore } from "../stores/app";
 import type { Achievement } from "../stores/app";
 import Icon from "./Icon.vue";
+import { t, uiLanguage } from "../i18n";
 
 const props = defineProps<{ achievement: Achievement; selected?: boolean }>();
 const emit = defineEmits<{ select: [ach: Achievement] }>();
@@ -11,9 +12,23 @@ const store = useAppStore();
 const editingManual = ref(false);
 const manualInput = ref("");
 
+const DATE_LOCALES = {
+  english: "en-US",
+  spanish: "es-ES",
+  french: "fr-FR",
+  german: "de-DE",
+  italian: "it-IT",
+  portuguese: "pt-PT",
+  russian: "ru-RU",
+  japanese: "ja-JP",
+  korean: "ko-KR",
+  schinese: "zh-CN",
+  tchinese: "zh-TW",
+} as const;
+
 function formatDate(ts: number): string {
   if (!ts) return "";
-  return new Date(ts * 1000).toLocaleDateString(undefined, {
+  return new Date(ts * 1000).toLocaleDateString(DATE_LOCALES[uiLanguage.value], {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -105,7 +120,7 @@ function removeProgress(e: MouseEvent) {
     <div class="ach-info">
       <div class="ach-name">{{ achievement.displayName }}</div>
       <div class="ach-desc">
-        {{ achievement.description || "Hidden achievement" }}
+        {{ achievement.description || t("achHidden") }}
       </div>
       <!-- Auto progress from Steam API -->
       <div
@@ -139,12 +154,12 @@ function removeProgress(e: MouseEvent) {
           <button class="mp-btn" title="-1" @click="adjustProgress($event, -1)">−</button>
           <span class="ach-progress-label num">{{ mp.current }}/{{ mp.max }}</span>
           <button class="mp-btn" title="+1" @click="adjustProgress($event, 1)">+</button>
-          <button class="mp-btn mp-remove" title="Stop tracking" @click="removeProgress($event)">✕</button>
+          <button class="mp-btn mp-remove" :title="t('achStopTracking')" @click="removeProgress($event)">✕</button>
         </div>
       </div>
       <!-- Manual track prompt -->
       <div v-else-if="canTrackManually && !editingManual" class="manual-start" @click.stop>
-        <button class="track-btn" @click="startManualTrack($event)">Track manually</button>
+        <button class="track-btn" @click="startManualTrack($event)">{{ t("achTrackManually") }}</button>
       </div>
       <!-- Manual track input -->
       <div v-else-if="editingManual" class="manual-input-row" @click.stop>
@@ -179,8 +194,8 @@ function removeProgress(e: MouseEvent) {
         :class="{ pinned: store.pinnedAchievements.has(achievement.apiName) }"
         :title="
           store.pinnedAchievements.has(achievement.apiName)
-            ? 'Unpin achievement'
-            : 'Pin achievement'
+            ? t('achUnpin')
+            : t('achPin')
         "
         @click="onPinClick"
       >

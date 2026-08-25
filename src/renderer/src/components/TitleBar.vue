@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useAppStore } from "../stores/app";
 import Icon from "./Icon.vue";
+import { t } from "../i18n";
 
 const emit = defineEmits<{ openSettings: [] }>();
 const store = useAppStore();
@@ -30,7 +31,7 @@ const toggleTop = () => window.steamApi.toggleTop();
     <div class="titlebar-drag">
       <span class="app-icon"></span>
       <span class="app-title">ACHIVIO</span>
-      <button class="tb-btn tb-settings" title="Settings" @click="emit('openSettings')">
+      <button class="tb-btn tb-settings" :title="t('titlebarSettings')" @click="emit('openSettings')">
         <Icon name="sliders" :size="13" />
       </button>
     </div>
@@ -41,8 +42,8 @@ const toggleTop = () => window.steamApi.toggleTop();
         :class="{ active: store.focusMode }"
         :title="
           store.focusMode
-            ? 'Exit focus mode'
-            : 'Focus mode (pinned only)'
+            ? t('titlebarExitFocus')
+            : t('titlebarFocusMode')
         "
         @click="store.toggleFocusMode()"
       >
@@ -53,15 +54,15 @@ const toggleTop = () => window.steamApi.toggleTop();
         :class="{ pinned }"
         :title="
           pinned
-            ? 'Pinned on top (click to unpin)'
-            : 'Not pinned (click to pin on top)'
+            ? t('titlebarPinnedOn')
+            : t('titlebarPinnedOff')
         "
         @click="toggleTop"
       >
         <span class="pin-dot"></span>
       </button>
-      <button class="tb-btn" title="Minimize" @click="minimize"><Icon name="minus" :size="13" /></button>
-      <button class="tb-btn tb-close" title="Close" @click="close"><Icon name="close" :size="12" /></button>
+      <button class="tb-btn" :title="t('titlebarMinimize')" @click="minimize"><Icon name="minus" :size="13" /></button>
+      <button class="tb-btn tb-close" :title="t('titlebarClose')" @click="close"><Icon name="close" :size="12" /></button>
     </div>
   </div>
 </template>

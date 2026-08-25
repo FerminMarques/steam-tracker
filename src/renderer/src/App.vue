@@ -6,6 +6,7 @@ import SetupView from "./views/SetupView.vue";
 import DashboardView from "./views/DashboardView.vue";
 import FocusView from "./views/FocusView.vue";
 import GuideReader from "./components/GuideReader.vue";
+import { t, setUiLanguage, isExperimentalUi } from "./i18n";
 
 const store = useAppStore();
 const configured = ref(false);
@@ -69,6 +70,7 @@ onMounted(async () => {
   const cfg = await window.steamApi.getConfig();
   configured.value = !!(cfg.apiKey && cfg.steamId);
   applyTheme(cfg.theme || "violet");
+  setUiLanguage(cfg.language);
   loading.value = false;
   removeFocusListener = window.steamApi.onFocusToggle(() => {
     if (store.pinnedAchievements.size > 0) {
@@ -114,6 +116,7 @@ function closeSettings() {
 async function onLanguageChange(e: Event) {
   const lang = (e.target as HTMLSelectElement).value;
   settingsLanguage.value = lang;
+  setUiLanguage(lang);
   await window.steamApi.saveLanguage(lang);
 }
 
@@ -177,7 +180,7 @@ async function recordAccelerator(e: KeyboardEvent, kind: "overlay" | "focus") {
     hotkeyError.value = "";
     focusHotkeyError.value = "";
   } else {
-    const msg = "Hotkey already in use, kept previous.";
+    const msg = t("settingsHotkeyInUse");
     if (kind === "overlay") hotkeyError.value = msg;
     else focusHotkeyError.value = msg;
   }
@@ -211,13 +214,13 @@ async function logout() {
       <div v-if="showSettings" class="settings-overlay" @click.self="closeSettings">
         <div class="settings-modal">
           <div class="settings-header">
-            <span class="settings-title">Settings</span>
+            <span class="settings-title">{{ t("settingsTitle") }}</span>
             <button class="settings-close" @click="closeSettings">✕</button>
           </div>
           <div class="settings-body">
             <!-- Hotkey -->
             <div class="settings-section">
-              <div class="settings-label">Overlay Hotkey</div>
+              <div class="settings-label">{{ t("settingsOverlayHotkey") }}</div>
               <div
                 class="hotkey-input"
                 :class="{ recording: recordingHotkey }"
@@ -226,17 +229,17 @@ async function logout() {
                 @keydown="recordAccelerator($event, 'overlay')"
                 @blur="recordingHotkey = false"
               >
-                <span v-if="recordingHotkey" class="recording-hint">Press your shortcut…</span>
+                <span v-if="recordingHotkey" class="recording-hint">{{ t("settingsPressShortcut") }}</span>
                 <span v-else class="hotkey-value">{{ settingsHotkeyDisplay }}</span>
                 <span class="hotkey-edit-icon">{{ recordingHotkey ? '⌨' : '✎' }}</span>
               </div>
               <p v-if="hotkeyError" class="settings-warn">⚠ {{ hotkeyError }}</p>
-              <p class="settings-hint">Press this anywhere to show/hide the overlay</p>
+              <p class="settings-hint">{{ t("settingsOverlayHotkeyHint") }}</p>
             </div>
 
             <!-- Focus Hotkey -->
             <div class="settings-section">
-              <div class="settings-label">Focus Mode Hotkey</div>
+              <div class="settings-label">{{ t("settingsFocusHotkey") }}</div>
               <div
                 class="hotkey-input"
                 :class="{ recording: recordingFocusHotkey }"
@@ -245,17 +248,17 @@ async function logout() {
                 @keydown="recordAccelerator($event, 'focus')"
                 @blur="recordingFocusHotkey = false"
               >
-                <span v-if="recordingFocusHotkey" class="recording-hint">Press your shortcut…</span>
+                <span v-if="recordingFocusHotkey" class="recording-hint">{{ t("settingsPressShortcut") }}</span>
                 <span v-else class="hotkey-value">{{ settingsFocusHotkeyDisplay }}</span>
                 <span class="hotkey-edit-icon">{{ recordingFocusHotkey ? '⌨' : '✎' }}</span>
               </div>
               <p v-if="focusHotkeyError" class="settings-warn">⚠ {{ focusHotkeyError }}</p>
-              <p class="settings-hint">Toggle focus mode (pinned achievements only)</p>
+              <p class="settings-hint">{{ t("settingsFocusHotkeyHint") }}</p>
             </div>
 
             <!-- Progress Keys -->
             <div class="settings-section">
-              <div class="settings-label">Progress Keys</div>
+              <div class="settings-label">{{ t("settingsProgressKeys") }}</div>
               <div class="progress-keys-row">
                 <div class="progress-key-group">
                   <span class="progress-key-label">−1</span>
@@ -278,12 +281,12 @@ async function logout() {
                   />
                 </div>
               </div>
-              <p class="settings-hint">Global keys to adjust manual progress in focus mode</p>
+              <p class="settings-hint">{{ t("settingsProgressKeysHint") }}</p>
             </div>
 
             <!-- Language -->
             <div class="settings-section">
-              <div class="settings-label">Language</div>
+              <div class="settings-label">{{ t("settingsLanguage") }}</div>
               <select
                 :value="settingsLanguage"
                 class="settings-select"
@@ -293,12 +296,15 @@ async function logout() {
                   {{ lang.label }}
                 </option>
               </select>
-              <p class="settings-hint">Affects achievement names and guide searches</p>
+              <p class="settings-hint">{{ t("settingsLanguageHint") }}</p>
+              <p v-if="isExperimentalUi(settingsLanguage)" class="settings-warn">
+                ⚠ {{ t("settingsAiNotice") }}
+              </p>
             </div>
 
             <!-- Theme -->
             <div class="settings-section">
-              <div class="settings-label">Accent Color</div>
+              <div class="settings-label">{{ t("settingsAccentColor") }}</div>
               <div class="theme-row">
                 <button
                   v-for="t in THEMES"
@@ -314,7 +320,7 @@ async function logout() {
 
             <!-- Opacity -->
             <div class="settings-section">
-              <div class="settings-label">Window Opacity</div>
+              <div class="settings-label">{{ t("settingsWindowOpacity") }}</div>
               <div class="opacity-row">
                 <input
                   type="range"
@@ -331,10 +337,10 @@ async function logout() {
 
             <!-- Account -->
             <div class="settings-section">
-              <div class="settings-label">Account</div>
-              <p class="settings-hint">Your Steam API key and ID are stored locally.</p>
+              <div class="settings-label">{{ t("settingsAccount") }}</div>
+              <p class="settings-hint">{{ t("settingsAccountHint") }}</p>
               <button class="logout-btn" @click="logout">
-                Log out &amp; reset credentials
+                {{ t("settingsLogout") }}
               </button>
             </div>
           </div>

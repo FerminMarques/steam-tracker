@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useAppStore } from "../stores/app";
 import type { Achievement } from "../stores/app";
+import { t } from "../i18n";
 
 const store = useAppStore();
 const progressKeys = ref({ down: '9', up: '0' });
@@ -77,7 +78,7 @@ function hasAutoProgress(ach: Achievement) {
     <!-- Drag handle -->
     <div class="focus-handle">
       <span class="handle-grip">⠿</span>
-      <span class="handle-label">Pinned Achievements</span>
+      <span class="handle-label">{{ t("focusTitle") }}</span>
     </div>
 
     <!-- Achievement rows -->
@@ -103,7 +104,7 @@ function hasAutoProgress(ach: Achievement) {
             <div class="focus-name" :class="{ achieved: ach.achieved }">
               {{ ach.displayName }}
             </div>
-            <div class="focus-desc">{{ ach.description || "Hidden achievement" }}</div>
+            <div class="focus-desc">{{ ach.description || t("achHidden") }}</div>
             <!-- Auto progress -->
             <div v-if="hasAutoProgress(ach)" class="focus-progress">
               <div class="focus-progress-track">
@@ -123,16 +124,16 @@ function hasAutoProgress(ach: Achievement) {
                 ></div>
               </div>
               <span class="focus-progress-val manual-val">
-                <span class="mp-symbol" :title="`Key: ${progressKeys.down}`">−</span>
+                <span class="mp-symbol" :title="t('focusKey', { key: progressKeys.down })">−</span>
                 {{ getMp(ach)!.current }}/{{ getMp(ach)!.max }}
-                <span class="mp-symbol" :title="`Key: ${progressKeys.up}`">+</span>
+                <span class="mp-symbol" :title="t('focusKey', { key: progressKeys.up })">+</span>
               </span>
             </div>
           </div>
 
           <button
             class="focus-unpin"
-            title="Unpin"
+            :title="t('focusUnpin')"
             @click.stop="store.togglePinAchievement(ach.apiName)"
           >
             ✕
@@ -150,7 +151,7 @@ function hasAutoProgress(ach: Achievement) {
             class="guide-open-btn"
             @click="openGuide(ach)"
           >
-            Open full guide →
+            {{ t("focusOpenGuide") }}
           </button>
         </div>
       </div>
