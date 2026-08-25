@@ -45,7 +45,7 @@ onUnmounted(() => store.stopPolling());
         <button
           class="refresh-btn"
           title="Refresh achievements"
-          @click="store.refreshAchievements()"
+          @click="store.checkNow()"
         >
           <Icon name="refresh" :size="13" />
         </button>

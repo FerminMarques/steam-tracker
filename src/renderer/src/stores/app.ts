@@ -219,7 +219,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  /**
+   /**
    * Called after the language setting changes: invalidates all
    * language-dependent caches and re-fetches achievements + guides.
    */
@@ -233,6 +233,17 @@ export const useAppStore = defineStore('app', () => {
       // Re-run the guide search in the new language (caches are already cleared)
       const fresh = achievements.value.find((a) => a.apiName === sel.apiName)
       if (fresh) await selectAchievement(fresh)
+    }
+  }
+
+  /** Manual "check now": re-detect the running game first so we never
+   *  refresh a stale appId after switching games */
+  async function checkNow() {
+    const prev = lastAppId.value
+    await doPollCurrentGame()
+    // Only refresh achievements if doPoll didn't just do a full reset for a new game
+    if (currentGame.value && lastAppId.value === prev) {
+      await refreshAchievements()
     }
   }
 
@@ -351,9 +362,8 @@ export const useAppStore = defineStore('app', () => {
     expandedGuides, manualProgress, achievementsError,
     readerGuide, loadingReader, openGuideReader, closeGuideReader,
     pending, completed, pinned, displayed, completedPercent,
-    pollCurrentGame, refreshAchievements, selectAchievement, clearSelectedAchievement,
-    applyLanguageChange,
-    togglePinAchievement, togglePinnedGuide, toggleGuideExpand, toggleFocusMode,
+    pollCurrentGame, checkNow, refreshAchievements, selectAchievement, clearSelectedAchievement,
+    applyLanguageChange, togglePinAchievement, togglePinnedGuide, toggleGuideExpand, toggleFocusMode,
     setManualProgressValue, adjustManualProgress, removeManualProgress,
     startPolling, stopPolling
   }
