@@ -390,6 +390,10 @@ async function logout() {
   border: 1px solid var(--border);
   border-radius: 12px;
   width: 320px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   animation: pop-in 0.18s ease;
@@ -400,6 +404,7 @@ async function logout() {
   justify-content: space-between;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 .settings-title {
   font-size: 14px;
@@ -425,6 +430,8 @@ async function logout() {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .settings-section {
   display: flex;
