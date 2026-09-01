@@ -146,3 +146,8 @@ input { font-family: inherit; }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(129, 140, 248, 0.25);
 }
+
+/* Reserve gutter so content doesn't shift when scrollbar appears */
+.ach-list, .guides-list, .settings-body, .reader-body, .focus-list, .setup-view {
+  scrollbar-gutter: stable;
+}

@@ -236,10 +236,22 @@ export async function getGameArt(appId: string): Promise<string | null> {
   return null
 }
 
+/** Steam Web API expects specific language codes — e.g. internal `korean` must map to `koreana` */
+function toSteamLang(lang: string): string {
+  const normalized = lang?.trim().toLowerCase() ?? 'english'
+  if (normalized === 'korean') return 'koreana'
+  // Steam docs use schinese/tchinese lower-case; ensure exact
+  if (normalized === 'schinese') return 'schinese'
+  if (normalized === 'tchinese') return 'tchinese'
+  return normalized
+}
+
 export async function getAchievements(appId: string): Promise<ApiResult<Achievement[]>> {
   const apiKey = store.get('apiKey') as string
   const steamId = store.get('steamId') as string
-  const lang = store.get('language', 'english') as string
+  const rawLang = store.get('language', 'english') as string
+  const lang = toSteamLang(rawLang)
+  console.log(`[steam] getAchievements appId=${appId} lang=${lang} (raw=${rawLang})`)
   if (!apiKey || !steamId) return fail('Steam API key or Steam ID missing — check Settings')
   try {
     const [schemaRes, playerRes, pctRes, statsRes] = await Promise.all([

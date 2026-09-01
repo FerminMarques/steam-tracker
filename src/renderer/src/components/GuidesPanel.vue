@@ -156,6 +156,7 @@ function looksLikeProgress(desc: string): boolean {
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .back-btn {
   background: var(--accent-soft);
@@ -173,6 +174,7 @@ function looksLikeProgress(desc: string): boolean {
 }
 .guides-title {
   min-width: 0;
+  flex: 1;
 }
 .ach-name-label {
   display: block;
@@ -247,6 +249,7 @@ function looksLikeProgress(desc: string): boolean {
 .guides-list {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   margin: 12px 0;
   padding: 0 10px 8px;
   display: flex;
@@ -313,6 +316,9 @@ function looksLikeProgress(desc: string): boolean {
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 .guide-ach-hint {
   font-size: 11px;
