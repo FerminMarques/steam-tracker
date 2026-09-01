@@ -1,8 +1,10 @@
-# Steam Tracker
+# ACHIVIO
+### Pin. Focus. Unlock. — Achievement Overlay for Steam
 
-Overlay de escritorio always-on-top para trackear logros de Steam en tiempo real mientras jugás.
+Overlay de escritorio always-on-top para trackear logros de Steam en tiempo real mientras jugás. Fijá lo que cazás, enfocate sin distracciones, desbloqueá más.
 
 ![stack](https://img.shields.io/badge/Electron-Vue%203%20--%20Pinia-818cf8)
+![brand](https://img.shields.io/badge/brand-ACHIVIO-818cf8)
 
 ## Features
 
@@ -24,7 +26,7 @@ La app consulta la Steam Web API con tu propia API key (se configura en el prime
 
 ```bash
 # instalar dependencias
-bun install   # o npm install
+bun install
 
 # dev server con HMR
 bun run dev
@@ -36,9 +38,15 @@ bun run build
 Typecheck:
 
 ```bash
-npx vue-tsc --noEmit -p tsconfig.web.json    # renderer
-npx vue-tsc --noEmit -p tsconfig.node.json   # main + preload
+bunx vue-tsc --noEmit -p tsconfig.web.json    # renderer
+bunx vue-tsc --noEmit -p tsconfig.node.json   # main + preload
 ```
+
+## Branding
+
+**ACHIVIO** — *Pin. Focus. Unlock.*
+
+El nombre viene de *achievement* + *archivo/vivo*. El tagline resume el loop core: pineás (`AchievementCard`), te enfocás (`FocusView`), desbloqueás.
 
 ## Stack
 
