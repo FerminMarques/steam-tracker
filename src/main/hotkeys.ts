@@ -6,10 +6,19 @@ export const DEFAULT_FOCUS_HOTKEY = 'CommandOrControl+Shift+F'
 export const DEFAULT_PROGRESS_DOWN = '9'
 export const DEFAULT_PROGRESS_UP = '0'
 
-export function registerHotkeys(win: BrowserWindow, overlayAccelerator: string): void {
+export function registerHotkeys(win: BrowserWindow, overlayAccelerator: string): boolean {
   globalShortcut.unregisterAll()
+  let allOk = true
+  const tryRegister = (acc: string, handler: () => void): boolean => {
+    const ok = globalShortcut.register(acc, handler)
+    if (!ok) {
+      console.error(`[hotkeys] failed to register "${acc}" — already in use`)
+      allOk = false
+    }
+    return ok
+  }
   // Main hotkey: show/hide overlay
-  globalShortcut.register(overlayAccelerator, () => {
+  tryRegister(overlayAccelerator, () => {
     if (win.isVisible()) {
       win.hide()
     } else {
@@ -18,22 +27,23 @@ export function registerHotkeys(win: BrowserWindow, overlayAccelerator: string):
   })
   // Focus mode hotkey: toggle without going through renderer
   const focusAccelerator = store.get('focusHotkey', DEFAULT_FOCUS_HOTKEY)
-  globalShortcut.register(focusAccelerator, () => {
+  tryRegister(focusAccelerator, () => {
     win.webContents.send('focus:toggle')
   })
-  // Progress +/- hotkeys
+  // Progress +/- hotkeys — single chars are more collision-prone, log but don't fail hard
   const progressDown = store.get('progressDownKey', DEFAULT_PROGRESS_DOWN)
   const progressUp = store.get('progressUpKey', DEFAULT_PROGRESS_UP)
   if (progressDown) {
-    globalShortcut.register(progressDown, () => {
+    tryRegister(progressDown, () => {
       win.webContents.send('progress:adjust', -1)
     })
   }
   if (progressUp) {
-    globalShortcut.register(progressUp, () => {
+    tryRegister(progressUp, () => {
       win.webContents.send('progress:adjust', 1)
     })
   }
+  return allOk
 }
 
 /** Test whether an accelerator can be registered (leaves shortcuts untouched on return) */

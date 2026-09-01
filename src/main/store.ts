@@ -1,5 +1,5 @@
 import { join } from 'path'
-import { readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'fs'
 
 // Simple fs-based config store (avoids ESM/CJS compatibility issues)
 export class ConfigStore {
@@ -32,7 +32,18 @@ export class ConfigStore {
   }
 
   private flush(): void {
-    writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8')
+    if (!this.filePath) return
+    const tmp = `${this.filePath}.tmp`
+    try {
+      writeFileSync(tmp, JSON.stringify(this.data, null, 2), 'utf-8')
+      renameSync(tmp, this.filePath)
+    } catch (err) {
+      console.error('[store] flush failed:', err)
+      // best-effort fallback directly to target
+      try {
+        writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8')
+      } catch {}
+    }
   }
 }
 
