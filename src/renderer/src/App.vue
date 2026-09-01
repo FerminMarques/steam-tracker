@@ -410,7 +410,7 @@ async function logout() {
   background: #13151e;
   border: 1px solid var(--border);
   border-radius: 12px;
-  width: 320px;
+  width: 360px;
   max-width: calc(100vw - 24px);
   max-height: calc(100vh - 24px);
   display: flex;
@@ -470,11 +470,17 @@ async function logout() {
   font-size: 12px;
   color: var(--text-secondary);
   margin: 0;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .settings-warn {
   font-size: 11px;
   color: var(--warning);
   margin: 0;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .hotkey-input {
   display: flex;

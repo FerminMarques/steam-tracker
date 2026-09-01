@@ -353,7 +353,13 @@ onUnmounted(() => store.stopPolling());
   padding: 8px 10px 0;
   flex-shrink: 0;
   border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
   display: flex;
   align-items: center;
@@ -366,11 +372,13 @@ onUnmounted(() => store.stopPolling());
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 7px 10px;
+  letter-spacing: 0.5px;
+  padding: 7px 8px;
   border-radius: 2px 2px 0 0;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .tab:hover {
   color: var(--text);
@@ -410,6 +418,7 @@ onUnmounted(() => store.stopPolling());
 }
 .search-input {
   flex: 1;
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -434,6 +443,10 @@ onUnmounted(() => store.stopPolling());
   padding: 4px 6px;
   cursor: pointer;
   outline: none;
+  flex-shrink: 0;
+  max-width: 35%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sort-select:focus {
   border-color: var(--accent-border);
