@@ -20,10 +20,31 @@ const SEARCH_SUFFIX: Record<string, string> = {
 function decodeEntities(s: string): string {
   return s
     .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '&')
+    .replace(/&gt;/g, '&gt;')
     .replace(/&#x27;/g, "'")
     .replace(/&quot;/g, '"')
+}
+
+// --- 100% guide memory (per game) ---
+// Once a 100% guide is found for any achievement, surface it in every search
+const BEST_LIMIT = 5
+
+function getBestGuides(appId: string): Guide[] {
+  try {
+    const parsed = JSON.parse(store.get(`bestguides_${appId}`, '[]'))
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export { getBestGuides }
+
+function rememberBestGuides(appId: string, guides: Guide[]): void {
+  const byUrl = new Map(getBestGuides(appId).map((g) => [g.url, g]))
+  for (const g of guides) if (g.is100Percent) byUrl.set(g.url, g)
+  store.set(`bestguides_${appId}`, JSON.stringify([...byUrl.values()].slice(0, BEST_LIMIT)))
 }
 
 /** Best-effort DuckDuckGo scrape; always appends reliable fallback links. */
@@ -91,6 +112,16 @@ export async function searchWeb(appId: string, gameName: string, achievementName
   } catch (err: any) {
     console.error('DDG search error:', err.message)
   }
+
+  // Surface known 100% guides in every achievement search of this game
+  const best = getBestGuides(appId)
+  if (best.length) {
+    const known = new Set(results.map((r) => r.url))
+    const missing = best.filter((g) => !known.has(g.url))
+    results.unshift(...missing)
+  }
+  // Remember any 100% guides found (for other achievements and future sessions)
+  if (results.some((r) => r.is100Percent)) rememberBestGuides(appId, results)
 
   // Always include reliable fallback links (visible even if DDG fails)
   results.push({

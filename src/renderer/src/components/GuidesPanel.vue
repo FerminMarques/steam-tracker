@@ -13,6 +13,11 @@ const sortedGuides = computed<Guide[]>(() => [
   ...store.guides.filter((g) => !g.is100Percent),
 ]);
 
+/** First 100% guide found for this game (pinned or not) */
+const bestGuide100 = computed<Guide | null>(
+  () => store.guides.find((g) => g.is100Percent) ?? null,
+);
+
 function openGuide(url: string) {
   window.steamApi.openUrl(url);
 }
@@ -50,6 +55,14 @@ function looksLikeProgress(desc: string): boolean {
         }}</span>
         <span class="guides-subtitle">{{ t("guidesTitle") }}</span>
       </div>
+      <button
+        v-if="bestGuide100"
+        class="btn-100"
+        :title="`${t('guidesOpen100')}: ${bestGuide100.title}`"
+        @click="store.openGuideReader(bestGuide100)"
+      >
+        {{ t("guidesBadge100") }}
+      </button>
     </div>
 
     <div
@@ -175,6 +188,24 @@ function looksLikeProgress(desc: string): boolean {
   color: var(--text-secondary);
   opacity: 0.7;
 }
+.btn-100 {
+  margin-left: auto;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: var(--warning);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.btn-100:hover {
+  background: rgba(251, 191, 36, 0.22);
+  border-color: rgba(251, 191, 36, 0.5);
+}
 .no-progress-note {
   display: flex;
   align-items: flex-start;
@@ -216,7 +247,8 @@ function looksLikeProgress(desc: string): boolean {
 .guides-list {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  margin: 12px 0;
+  padding: 0 10px 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;

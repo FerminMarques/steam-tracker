@@ -359,13 +359,14 @@ async function logout() {
   color: var(--text, #e2e8f0);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 .app-root.focus-mode {
   height: auto;
-  border: 1px solid var(--accent-border, rgba(129, 140, 248, 0.18));
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  border-color: var(--accent-border, rgba(129, 140, 248, 0.13));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 .loading-screen {
   flex: 1;

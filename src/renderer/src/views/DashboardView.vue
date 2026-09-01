@@ -453,7 +453,8 @@ onUnmounted(() => store.stopPolling());
 .ach-list {
   flex: 1;
   overflow-y: auto;
-  padding: 6px 8px;
+  margin: 12px 0;
+  padding: 0 8px 8px;
   display: flex;
   flex-direction: column;
   gap: 2px;

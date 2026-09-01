@@ -11,7 +11,7 @@ import {
 } from './hotkeys'
 import { createWindow, focusResize } from './window'
 import { getCurrentGame, getAchievements, getGameArt, resolveVanity } from './steam'
-import { searchWeb } from './search'
+import { searchWeb, getBestGuides } from './search'
 import { fetchGuideContent } from './scrape'
 import { openGuidePanel, updateGuidePanel, closeGuidePanel, getGuidePanelData, isGuidePanelSticky, setGuidePanelSticky, onGuidePanelFocusExited } from './guidePanel'
 import type { Guide } from '../shared/types'
@@ -54,6 +54,9 @@ app.whenReady().then(() => {
   ipcMain.handle('search:web', (_, { appId, gameName, achievementName }: { appId: string; gameName: string; achievementName: string }) =>
     searchWeb(appId, gameName, achievementName)
   )
+
+  // --- Known 100% guides for a game ---
+  ipcMain.handle('best-guides:get', (_, appId: string) => getBestGuides(appId))
 
   // --- Open URL in default browser ---
   ipcMain.on('open:url', (_, url: string) => {

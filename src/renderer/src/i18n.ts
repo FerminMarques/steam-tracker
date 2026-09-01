@@ -50,6 +50,7 @@ const en = {
   guidesUnpinGuide: "Unpin guide",
   guidesPinGuide: "Pin this guide",
   guidesRead: "READ",
+  guidesOpen100: "Open 100% guide",
   guidesSearchFor: "Search for",
   guidesInThisGuide: "in this guide",
 
@@ -168,6 +169,7 @@ const es: Record<MessageKey, string> = {
   guidesUnpinGuide: "Desfijar guía",
   guidesPinGuide: "Fijar esta guía",
   guidesRead: "LEER",
+  guidesOpen100: "Abrir guía 100%",
   guidesSearchFor: "Busca",
   guidesInThisGuide: "en esta guía",
 

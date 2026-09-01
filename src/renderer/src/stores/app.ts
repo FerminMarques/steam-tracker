@@ -38,6 +38,8 @@ export const useAppStore = defineStore('app', () => {
   // Separate guide panel window state (main window side)
   const guidePanelOpen = ref(false)
   const guidePanelUrl = ref<string | null>(null)
+  // Known 100% guides for the current game (persisted main-side)
+  const bestGuides = ref<Guide[]>([])
 
   function filterAndSort(list: Achievement[]): Achievement[] {
     let result = list
@@ -215,6 +217,31 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     })
   }
 
+  /** Open (or update) the separate guide panel window for any guide (pinned or not) */
+  function openBestGuidePanel(guide: Guide) {
+    guidePanelOpen.value = true
+    guidePanelUrl.value = guide.url
+    window.steamApi.openGuidePanel({
+      title: guide.title,
+      url: guide.url,
+      content: guide.content ?? ''
+    })
+    if (!guide.content) {
+      window.steamApi
+        .fetchGuideContent(guide.url, '', true)
+        .then((res) => {
+          if (res.success && res.content && guidePanelUrl.value === guide.url) {
+            window.steamApi.updateGuidePanel({
+              title: guide.title,
+              url: guide.url,
+              content: res.content
+            })
+          }
+        })
+        .catch(() => { /* silent */ })
+    }
+  }
+
   // Push content updates to the panel while it shows this guide (async fetch landing)
   watch(pinnedGuides, () => {
     if (!guidePanelOpen.value || !guidePanelUrl.value) return
@@ -326,6 +353,7 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
       achievements.value = []
       pinnedAchievements.value = new Set()
       pinnedGuides.value = new Map()
+      bestGuides.value = []
       const wasFocus = focusMode.value
       focusMode.value = false
       if (wasFocus) onFocusModeOff()
@@ -353,6 +381,10 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
           // Resolve header art (async, doesn't block the list)
           window.steamApi.getGameArt(game.appId).then((url) => {
             if (currentGame.value?.appId === game.appId && url) currentGameArt.value = url
+          }).catch(() => { })
+          // Load known 100% guides for this game (async, doesn't block the list)
+          window.steamApi.getBestGuides(game.appId).then((guides) => {
+            if (currentGame.value?.appId === game.appId) bestGuides.value = guides
           }).catch(() => { })
         } finally {
           loadingAchievements.value = false
@@ -388,6 +420,10 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
       if (gen === _searchGen) {
         guides.value = result
         _guidesCache.set(cacheKey, result)
+        // Merge any newly found 100% guides into the game-level cache
+        const known = new Set(bestGuides.value.map((g) => g.url))
+        const fresh = result.filter((g) => g.is100Percent && !known.has(g.url))
+        if (fresh.length) bestGuides.value = [...bestGuides.value, ...fresh]
       }
     } catch {
       if (gen === _searchGen) guides.value = []
@@ -425,7 +461,7 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     searchQuery, sortBy, isOnTop, pinnedAchievements, pinnedGuides, focusMode,
     expandedGuides, manualProgress, achievementsError,
     readerGuide, loadingReader, openGuideReader, closeGuideReader,
-    guidePanelOpen, openGuidePanel,
+    guidePanelOpen, openGuidePanel, bestGuides, openBestGuidePanel,
     loadingGuidesContent, loadPinnedGuideContent,
     pending, completed, pinned, displayed, completedPercent,
     pollCurrentGame, refreshAchievements, selectAchievement, clearSelectedAchievement,

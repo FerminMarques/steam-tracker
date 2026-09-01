@@ -20,6 +20,8 @@ const steamApi = {
     ipcRenderer.invoke('steam:get-achievements', appId),
   searchWeb: (appId: string, gameName: string, achievementName: string): Promise<Guide[]> =>
     ipcRenderer.invoke('search:web', { appId, gameName, achievementName }),
+  getBestGuides: (appId: string): Promise<Guide[]> =>
+    ipcRenderer.invoke('best-guides:get', appId),
   fetchGuideContent: (url: string, achievementName: string, full = false): Promise<{ success: boolean; content: string }> =>
     ipcRenderer.invoke('fetch:guide-content', { url, achievementName, full }),
   openUrl: (url: string): void => ipcRenderer.send('open:url', url),

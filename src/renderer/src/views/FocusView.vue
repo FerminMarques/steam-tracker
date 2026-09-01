@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useAppStore } from "../stores/app";
 import type { Achievement } from "../stores/app";
+import Icon from "../components/Icon.vue";
 import { t } from "../i18n";
 
 const store = useAppStore();
@@ -86,6 +87,14 @@ function hasAutoProgress(ach: Achievement) {
     <div class="focus-handle">
       <span class="handle-grip">⠿</span>
       <span class="handle-label">{{ t("focusTitle") }}</span>
+      <button
+        v-if="store.bestGuides.length"
+        class="handle-btn-guide"
+        :title="`${t('guidesOpen100')}: ${store.bestGuides[0].title}`"
+        @click="store.openBestGuidePanel(store.bestGuides[0])"
+      >
+        <Icon name="book" :size="11" />
+      </button>
     </div>
 
     <!-- Achievement rows -->
@@ -184,6 +193,25 @@ function hasAutoProgress(ach: Achievement) {
   text-transform: uppercase;
   letter-spacing: 0.4px;
   flex: 1;
+}
+.handle-btn-guide {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  -webkit-app-region: no-drag;
+}
+.handle-btn-guide:hover {
+  color: var(--text);
 }
 .focus-list {
   display: flex;

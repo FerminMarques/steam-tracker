@@ -12,6 +12,7 @@ export interface SteamApi {
   getGameArt(appId: string): Promise<string | null>
   getAchievements(appId: string): Promise<ApiResult<Achievement[]>>
   searchWeb(appId: string, gameName: string, achievementName: string): Promise<Guide[]>
+  getBestGuides(appId: string): Promise<Guide[]>
   fetchGuideContent(url: string, achievementName: string, full?: boolean): Promise<{ success: boolean; content: string }>
   openUrl(url: string): void
   minimize(): void
