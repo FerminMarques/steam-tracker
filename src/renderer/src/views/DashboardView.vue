@@ -45,13 +45,8 @@ onUnmounted(() => store.stopPolling());
         </div>
         <button
           class="refresh-btn"
-<<<<<<< HEAD
           :title="t('dashRefreshAchievements')"
-          @click="store.refreshAchievements()"
-=======
-          title="Refresh achievements"
           @click="store.checkNow()"
->>>>>>> 4143d7e72084ab2657aef784ff1ce6b62db4736f
         >
           <Icon name="refresh" :size="13" />
         </button>
