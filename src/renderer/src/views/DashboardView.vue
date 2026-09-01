@@ -289,14 +289,14 @@ onUnmounted(() => store.stopPolling());
 }
 .borderless-tip {
   font-size: 10px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   padding: 8px 14px;
   margin-top: 6px;
   line-height: 1.4;
 }
 .borderless-tip strong {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 .refresh-btn {
   margin-left: auto;
