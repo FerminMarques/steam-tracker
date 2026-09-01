@@ -150,7 +150,8 @@ function openApiKeyPage() {
   <div class="setup-view">
     <div class="setup-hero">
       <div class="hero-icon">◆</div>
-      <h1 class="hero-title">Achivio</h1>
+      <h1 class="hero-title">ACHIVIO</h1>
+      <p class="hero-tagline">Pin. Focus. Unlock.</p>
       <p class="hero-sub">{{ t("appTagline") }}</p>
     </div>
 
@@ -257,16 +258,26 @@ function openApiKeyPage() {
   margin-bottom: 12px;
 }
 .hero-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--text);
-  margin: 0 0 6px;
-  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+  letter-spacing: 2.5px;
+}
+.hero-tagline {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
 }
 .hero-sub {
   font-size: 13px;
   color: var(--text-secondary);
   margin: 0;
+  max-width: 320px;
+  line-height: 1.4;
 }
 .setup-form {
   display: flex;

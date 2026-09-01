@@ -351,6 +351,18 @@ async function logout() {
                 {{ t("settingsLogout") }}
               </button>
             </div>
+
+            <!-- About -->
+            <div class="settings-section about-section">
+              <div class="settings-label">About</div>
+              <div class="about-brand">
+                <span class="about-icon">◆</span>
+                <span class="about-name">ACHIVIO</span>
+                <span class="about-version">v1.0.0</span>
+              </div>
+              <p class="about-tagline">Pin. Focus. Unlock.</p>
+              <p class="settings-hint">Achievement Overlay for Steam · Electron + Vue</p>
+            </div>
           </div>
         </div>
       </div>
@@ -615,5 +627,41 @@ async function logout() {
 .logout-btn:hover {
   background: rgba(248, 113, 113, 0.15);
   border-color: rgba(248, 113, 113, 0.35);
+}
+.about-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.about-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.about-icon {
+  color: var(--accent);
+  font-size: 10px;
+}
+.about-name {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--text);
+}
+.about-version {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.about-tagline {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin: 6px 0 0;
 }
 </style>
