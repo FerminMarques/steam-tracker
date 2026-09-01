@@ -115,9 +115,11 @@ function closeSettings() {
 
 async function onLanguageChange(e: Event) {
   const lang = (e.target as HTMLSelectElement).value;
+  if (lang === settingsLanguage.value) return;
   settingsLanguage.value = lang;
   setUiLanguage(lang);
   await window.steamApi.saveLanguage(lang);
+  await store.applyLanguageChange();
 }
 
 async function onProgressKeyDown(e: KeyboardEvent, which: 'down' | 'up') {
