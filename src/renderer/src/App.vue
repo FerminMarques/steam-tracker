@@ -86,6 +86,12 @@ onUnmounted(() => {
 watch(
   () => store.focusMode,
   (active) => {
+    if (active) {
+      // Auto-cierra overlays de la vista general al entrar en foco
+      if (showSettings.value) showSettings.value = false;
+      if (store.readerGuide) store.closeGuideReader();
+      if (store.selectedAchievement) store.clearSelectedAchievement();
+    }
     window.steamApi.resizeFocus(active, store.pinned.length);
   },
 );

@@ -304,6 +304,15 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
 
   function toggleFocusMode() {
     if (pinnedAchievements.value.size > 0) {
+      const entering = !focusMode.value
+      if (entering) {
+        // Cierra overlays de la vista general para no tapar el foco
+        if (readerGuide.value) readerGuide.value = null
+        if (selectedAchievement.value) {
+          selectedAchievement.value = null
+          guides.value = []
+        }
+      }
       focusMode.value = !focusMode.value
       if (!focusMode.value) onFocusModeOff()
     }
