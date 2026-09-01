@@ -4,9 +4,13 @@ import { useAppStore } from "../stores/app";
 import AchievementCard from "../components/AchievementCard.vue";
 import GuidesPanel from "../components/GuidesPanel.vue";
 import Icon from "../components/Icon.vue";
-import { t } from "../i18n";
+import { t, uiLanguage } from "../i18n";
 
 const store = useAppStore();
+const showLangFallbackHint = computed(() => {
+  const lang = uiLanguage.value;
+  return lang === 'italian' || lang === 'tchinese';
+});
 // Avoids vue-tsc narrowing `selectedAchievement` to null inside the v-else branch
 const selectedApiName = computed(() => store.selectedAchievement?.apiName ?? "");
 
@@ -77,6 +81,10 @@ onUnmounted(() => store.stopPolling());
       <!-- Error banner (Steam API failures) -->
       <div v-if="store.achievementsError" class="error-banner">
         ⚠ {{ store.achievementsError }}
+      </div>
+      <!-- Language fallback hint for games without that translation -->
+      <div v-if="showLangFallbackHint && store.achievements.length && !store.loadingAchievements" class="lang-fallback-banner">
+        ℹ {{ t("dashLangFallback") }}
       </div>
 
       <!-- Guides panel (when achievement selected) -->
@@ -325,6 +333,17 @@ onUnmounted(() => store.stopPolling());
   line-height: 1.4;
   flex-shrink: 0;
 }
+.lang-fallback-banner {
+  margin: 8px 10px 0;
+  padding: 6px 10px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
 .center-state {
   display: flex;
   flex-direction: column;
@@ -353,17 +372,13 @@ onUnmounted(() => store.stopPolling());
   padding: 8px 10px 0;
   flex-shrink: 0;
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  row-gap: 2px;
 }
-.tabs::-webkit-scrollbar { display: none; }
 .tab {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: transparent;
   border: none;
   color: var(--text-secondary);
@@ -372,8 +387,8 @@ onUnmounted(() => store.stopPolling());
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 7px 8px;
+  letter-spacing: 0.3px;
+  padding: 6px 8px;
   border-radius: 2px 2px 0 0;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
@@ -466,6 +481,7 @@ onUnmounted(() => store.stopPolling());
 .ach-list {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   margin: 12px 0;
   padding: 0 8px 8px;
   display: flex;

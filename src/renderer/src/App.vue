@@ -452,6 +452,7 @@ async function logout() {
   flex-direction: column;
   gap: 18px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
 }
 .settings-section {

@@ -249,6 +249,7 @@ function looksLikeProgress(desc: string): boolean {
 .guides-list {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   margin: 12px 0;
   padding: 0 10px 8px;
   display: flex;

@@ -87,6 +87,7 @@ const en = {
   settingsAccountHint: "Your Steam API key and ID are stored locally.",
   settingsLogout: "Log out & reset credentials",
 
+  dashLangFallback: "This game has no translation for the selected language on Steam — showing English fallback.",
   setupApiKeyLabel: "Steam Web API Key",
   setupApiKeyPlaceholder: "Paste your API key here",
   setupGetApiKey: "Get your free API key →",
@@ -207,6 +208,8 @@ const es: Record<MessageKey, string> = {
   settingsAccountHint:
     "Tu API key y tu ID de Steam se guardan localmente.",
   settingsLogout: "Cerrar sesión y restablecer credenciales",
+
+  dashLangFallback: "Este juego no tiene traducción para el idioma seleccionado en Steam — se muestra el texto en inglés.",
 
   setupApiKeyLabel: "Clave de Steam Web API",
   setupApiKeyPlaceholder: "Pega tu API key aquí",
