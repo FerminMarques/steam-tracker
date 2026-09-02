@@ -10,6 +10,7 @@ export interface SteamApi {
   saveLanguage(lang: string): Promise<boolean>
   getConfigPath(): Promise<string>
   openConfigPath(): Promise<boolean>
+  getClipboardText(): Promise<string>
   getCurrentGame(): Promise<ApiResult<SteamGame>>
   getGameArt(appId: string): Promise<string | null>
   getAchievements(appId: string): Promise<ApiResult<Achievement[]>>

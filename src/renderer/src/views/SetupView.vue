@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { t, setUiLanguage, isExperimentalUi } from "../i18n";
 
 const emit = defineEmits<{ configured: [] }>();
@@ -58,6 +58,45 @@ onMounted(async () => {
 function openConfigPath() {
   window.steamApi.openConfigPath();
 }
+
+let clipboardPoll: ReturnType<typeof setInterval> | null = null
+
+async function tryInsertFromClipboard() {
+  try {
+    const text = (await window.steamApi.getClipboardText())?.trim()
+    if (!text) return false
+    // Accept full profile URL, vanity or raw 17-digit ID
+    const isSteamUrl = /steamcommunity\.com\/(id|profiles)\/[^\/\s]+/i.test(text) || /^\d{17}$/.test(text)
+    if (!isSteamUrl) return false
+    if (text === steamIdInput.value.trim()) return false
+    steamIdInput.value = text
+    await resolveInput()
+    return true
+  } catch {
+    return false
+  }
+}
+
+function startClipboardWatch() {
+  if (clipboardPoll) return
+  // Poll while the setup view is visible, stop once we successfully inserted
+  clipboardPoll = setInterval(async () => {
+    const inserted = await tryInsertFromClipboard()
+    if (inserted && isSteamId64(steamId.value)) stopClipboardWatch()
+  }, 800)
+  // Also try once on window focus
+  window.addEventListener('focus', tryInsertFromClipboard)
+}
+
+function stopClipboardWatch() {
+  if (clipboardPoll) {
+    clearInterval(clipboardPoll)
+    clipboardPoll = null
+  }
+  window.removeEventListener('focus', tryInsertFromClipboard)
+}
+
+onUnmounted(() => stopClipboardWatch())
 
 function isSteamId64(val: string) {
   return /^\d{17}$/.test(val.trim());
@@ -155,6 +194,7 @@ function openApiKeyPage() {
 
 function openSteamIdPage() {
   window.open("https://steamcommunity.com/my/", "_blank");
+  startClipboardWatch()
 }
 </script>
 
