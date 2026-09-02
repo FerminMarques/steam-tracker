@@ -46,17 +46,26 @@ export function createWindow(): void {
 export function focusResize(e: Electron.IpcMainEvent, { active, count, height }: { active: boolean; count: number; height?: number }): void {
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) return
+  const display = screen.getDisplayMatching(win.getBounds())
   if (active) {
     // Compact focus mode — prefer the renderer-measured content height
     const fallback = Math.min(400, 28 + count * 42 + Math.max(0, count - 1) * 2 + 12)
     // Allow the window to grow with expanded guides (capped at 85% of the work area)
-    const maxH = Math.floor(screen.getPrimaryDisplay().workAreaSize.height * 0.85)
+    const maxH = Math.floor(display.workAreaSize.height * 0.85)
     const h = Math.max(120, Math.min(height ?? fallback, maxH))
     win.setMinimumSize(280, 80)
     // No animate: instant resize so expanded guide content appears directly
     win.setSize(380, h + 2)
   } else {
     win.setMinimumSize(380, 500)
-    win.setSize(440, 680, true)
+    // Keep window within current display workArea
+    const targetW = 440, targetH = 680
+    win.setSize(targetW, targetH, true)
+    // Ensure it stays on-screen after language/layout changes
+    const bounds = win.getBounds()
+    const wa = display.workArea
+    if (bounds.x + bounds.width > wa.x + wa.width || bounds.y + bounds.height > wa.y + wa.height) {
+      win.setPosition(Math.max(wa.x, Math.min(bounds.x, wa.x + wa.width - targetW)), Math.max(wa.y, Math.min(bounds.y, wa.y + wa.height - targetH)))
+    }
   }
 }

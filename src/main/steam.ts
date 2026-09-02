@@ -253,20 +253,27 @@ export async function getAchievements(appId: string): Promise<ApiResult<Achievem
   const lang = toSteamLang(rawLang)
   console.log(`[steam] getAchievements appId=${appId} lang=${lang} (raw=${rawLang})`)
   if (!apiKey || !steamId) return fail('Steam API key or Steam ID missing — check Settings')
+
+  // Helper with single retry on 429
+  const getWithRetry = async (url: string, params: Record<string, string>, timeout: number) => {
+    try {
+      return await axios.get(url, { params, timeout })
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        console.warn(`[steam] 429 for ${url}, retrying once...`)
+        await new Promise((r) => setTimeout(r, 2000))
+        return axios.get(url, { params, timeout })
+      }
+      throw err
+    }
+  }
+
   try {
     const [schemaRes, playerRes, pctRes, statsRes] = await Promise.all([
-      axios.get(`${STEAM_API}/ISteamUserStats/GetSchemaForGame/v2/`, {
-        params: { key: apiKey, appid: appId, l: lang }, timeout: 15000
-      }),
-      axios.get(`${STEAM_API}/ISteamUserStats/GetPlayerAchievements/v1/`, {
-        params: { key: apiKey, steamid: steamId, appid: appId, l: lang }, timeout: 15000
-      }),
-      axios.get(`${STEAM_API}/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/`, {
-        params: { gameid: appId }, timeout: 15000
-      }),
-      axios.get(`${STEAM_API}/ISteamUserStats/GetUserStatsForGame/v2/`, {
-        params: { key: apiKey, steamid: steamId, appid: appId }, timeout: 15000
-      }).catch(() => ({ data: null }))
+      getWithRetry(`${STEAM_API}/ISteamUserStats/GetSchemaForGame/v2/`, { key: apiKey, appid: appId, l: lang }, 15000),
+      getWithRetry(`${STEAM_API}/ISteamUserStats/GetPlayerAchievements/v1/`, { key: apiKey, steamid: steamId, appid: appId, l: lang }, 15000),
+      getWithRetry(`${STEAM_API}/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/`, { gameid: appId }, 15000),
+      getWithRetry(`${STEAM_API}/ISteamUserStats/GetUserStatsForGame/v2/`, { key: apiKey, steamid: steamId, appid: appId }, 15000).catch(() => ({ data: null }))
     ])
 
     // GetPlayerAchievements reports per-game errors (e.g. private profile / bad key) inside a 200 response
