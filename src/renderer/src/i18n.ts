@@ -91,15 +91,15 @@ const en = {
   setupApiKeyLabel: "Steam Web API Key",
   setupApiKeyPlaceholder: "Paste your API key here",
   setupGetApiKey: "Get your free API key →",
-  setupSteamIdLabel: "Your Steam ID or Username",
-  setupSteamIdPlaceholder: "Username or 76561198...",
+  setupSteamIdLabel: "Steam ID",
+  setupSteamIdPlaceholder: "7656119... or steamcommunity.com/id/name",
   setupSteamIdIs: "✓ Steam ID: {id}",
   setupResolved: "✓ Resolved: {id}",
-  setupEnterApiKeyFirst: "Enter your API key first to resolve a username.",
+  setupEnterApiKeyFirst: "Enter your API key first to resolve a vanity URL.",
   setupUsernameNotFound:
-    "Username not found. Try pasting your Steam ID64 directly.",
+    "Vanity not found. Paste your 17-digit SteamID64 directly.",
   setupUsernameHint:
-    "Enter your Steam username — we'll resolve it automatically",
+    "Paste your 17-digit ID, or your vanity URL / name (needs API key)",
   setupLanguageHint:
     "The interface, achievements and guide searches will use this language",
   setupHotkeyLabel: "Toggle Overlay Hotkey",
@@ -214,16 +214,16 @@ const es: Record<MessageKey, string> = {
   setupApiKeyLabel: "Clave de Steam Web API",
   setupApiKeyPlaceholder: "Pega tu API key aquí",
   setupGetApiKey: "Consigue tu API key gratis →",
-  setupSteamIdLabel: "Tu ID de Steam o nombre de usuario",
-  setupSteamIdPlaceholder: "Usuario o 76561198...",
+  setupSteamIdLabel: "Steam ID",
+  setupSteamIdPlaceholder: "7656119... o steamcommunity.com/id/nombre",
   setupSteamIdIs: "✓ Steam ID: {id}",
   setupResolved: "✓ Resuelto: {id}",
   setupEnterApiKeyFirst:
-    "Introduce tu API key primero para resolver un usuario.",
+    "Introduce tu API key primero para resolver una vanity URL.",
   setupUsernameNotFound:
-    "Usuario no encontrado. Prueba pegando tu Steam ID64 directamente.",
+    "Vanity no encontrada. Pega tu SteamID64 de 17 dígitos directamente.",
   setupUsernameHint:
-    "Escribe tu nombre de usuario de Steam — lo resolveremos automáticamente",
+    "Pega tu ID de 17 dígitos, o tu vanity URL / nombre (necesita API key)",
   setupLanguageHint:
     "La interfaz, los logros y las búsquedas de guías usarán este idioma",
   setupHotkeyLabel: "Atajo para mostrar/ocultar el overlay",

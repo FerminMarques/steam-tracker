@@ -165,6 +165,7 @@ function openApiKeyPage() {
           :placeholder="t('setupApiKeyPlaceholder')"
           @keyup.enter="save"
         />
+        <p class="form-hint">{{ t("setupPrivacyNote") }}</p>
         <button class="help-link" type="button" @click="openApiKeyPage">
           {{ t("setupGetApiKey") }}
         </button>
@@ -185,12 +186,14 @@ function openApiKeyPage() {
             class="resolve-btn"
             :disabled="resolving"
             type="button"
+            :title="t('setupUsernameHint')"
             @click="resolveInput"
           >
             {{ resolving ? "..." : "→" }}
           </button>
         </div>
         <p v-if="resolveHint" class="form-ok">{{ resolveHint }}</p>
+        <p v-if="error && !resolveHint" class="form-warn">⚠ {{ error }}</p>
         <p class="form-hint">{{ t("setupUsernameHint") }}</p>
       </div>
 
