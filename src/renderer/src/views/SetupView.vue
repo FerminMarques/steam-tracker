@@ -152,6 +152,10 @@ async function save() {
 function openApiKeyPage() {
   window.open("https://steamcommunity.com/dev/apikey", "_blank");
 }
+
+function openSteamIdPage() {
+  window.open("https://steamcommunity.com/my/", "_blank");
+}
 </script>
 
 <template>
@@ -207,6 +211,9 @@ function openApiKeyPage() {
         <p v-if="resolveHint" class="form-ok">{{ resolveHint }}</p>
         <p v-if="error && !resolveHint" class="form-warn">⚠ {{ error }}</p>
         <p class="form-hint">{{ t("setupUsernameHint") }}</p>
+        <button class="help-link" type="button" @click="openSteamIdPage">
+          {{ t("setupGetSteamId") }}
+        </button>
       </div>
 
       <div class="form-group">
