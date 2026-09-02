@@ -488,6 +488,7 @@ function openSteamIdPage() {
 .resolve-row {
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 .resolve-row .form-input {
   flex: 1;
@@ -500,6 +501,10 @@ function openSteamIdPage() {
   cursor: pointer;
   font-size: 16px;
   padding: 0 14px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.15s;
   flex-shrink: 0;
 }
@@ -545,6 +550,7 @@ function openSteamIdPage() {
   padding: 12px;
   transition: all 0.15s;
   width: 100%;
+  margin-bottom: 16px;
 }
 .save-btn:hover:not(:disabled) {
   background: #6366f1;
