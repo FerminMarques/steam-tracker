@@ -196,9 +196,9 @@ async function recordAccelerator(e: KeyboardEvent, kind: "overlay" | "focus") {
 
 async function logout() {
   await window.steamApi.clearConfig();
+  store.resetForLogout();
   configured.value = false;
   showSettings.value = false;
-  store.focusMode = false;
 }
 </script>
 
@@ -209,10 +209,12 @@ async function logout() {
       <div class="spinner"></div>
     </div>
     <SetupView v-else-if="!configured" @configured="configured = true" />
-    <Transition name="fade-view" mode="out-in">
-      <FocusView v-if="store.focusMode" />
-      <DashboardView v-else />
-    </Transition>
+    <template v-else>
+      <Transition name="fade-view" mode="out-in">
+        <FocusView v-if="store.focusMode" />
+        <DashboardView v-else />
+      </Transition>
+    </template>
 
     <!-- Integrated guide reader -->
     <GuideReader />

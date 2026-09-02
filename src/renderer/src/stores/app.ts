@@ -492,6 +492,28 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     document.removeEventListener('visibilitychange', onVisibilityChange)
   }
 
+  function resetForLogout() {
+    stopPolling()
+    currentGame.value = null
+    currentGameArt.value = null
+    achievements.value = []
+    selectedAchievement.value = null
+    guides.value = []
+    bestGuides.value = []
+    pinnedAchievements.value = new Set()
+    pinnedGuides.value = new Map()
+    expandedGuides.value = new Set()
+    manualProgress.value = new Map()
+    readerGuide.value = null
+    guidePanelOpen.value = false
+    guidePanelUrl.value = null
+    lastAppId.value = null
+    achievementsError.value = null
+    focusMode.value = false
+    _guidesCache.clear()
+    _fullGuideCache.clear()
+  }
+
   return {
     currentGame, achievements, selectedAchievement, guides, currentGameArt,
     loadingGame, loadingAchievements, loadingGuides, activeTab,
@@ -504,6 +526,6 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     pollCurrentGame, checkNow, refreshAchievements, selectAchievement, clearSelectedAchievement,
     applyLanguageChange, togglePinAchievement, togglePinnedGuide, toggleGuideExpand, toggleFocusMode,
     setManualProgressValue, adjustManualProgress, removeManualProgress,
-    startPolling, stopPolling
+    startPolling, stopPolling, resetForLogout
   }
 })

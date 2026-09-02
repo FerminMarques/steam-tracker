@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { t, setUiLanguage, isExperimentalUi } from "../i18n";
 
 const emit = defineEmits<{ configured: [] }>();
@@ -17,6 +17,7 @@ const hotkeyDisplay = ref("Ctrl+Shift+S");
 const recordingHotkey = ref(false);
 const hotkeyError = ref("");
 const language = ref("english");
+const configPath = ref("");
 
 const LANGUAGES = [
   { value: 'english', label: 'English' },
@@ -49,7 +50,53 @@ onMounted(async () => {
     steamId.value = cfg.steamId;
     resolveHint.value = t("setupSteamIdIs", { id: cfg.steamId });
   }
+  try {
+    configPath.value = await window.steamApi.getConfigPath();
+  } catch {}
 });
+
+function openConfigPath() {
+  window.steamApi.openConfigPath();
+}
+
+let clipboardPoll: ReturnType<typeof setInterval> | null = null
+
+async function tryInsertFromClipboard() {
+  try {
+    const text = (await window.steamApi.getClipboardText())?.trim()
+    if (!text) return false
+    // Accept full profile URL, vanity or raw 17-digit ID
+    const isSteamUrl = /steamcommunity\.com\/(id|profiles)\/[^\/\s]+/i.test(text) || /^\d{17}$/.test(text)
+    if (!isSteamUrl) return false
+    if (text === steamIdInput.value.trim()) return false
+    steamIdInput.value = text
+    await resolveInput()
+    return true
+  } catch {
+    return false
+  }
+}
+
+function startClipboardWatch() {
+  if (clipboardPoll) return
+  // Poll while the setup view is visible, stop once we successfully inserted
+  clipboardPoll = setInterval(async () => {
+    const inserted = await tryInsertFromClipboard()
+    if (inserted && isSteamId64(steamId.value)) stopClipboardWatch()
+  }, 800)
+  // Also try once on window focus
+  window.addEventListener('focus', tryInsertFromClipboard)
+}
+
+function stopClipboardWatch() {
+  if (clipboardPoll) {
+    clearInterval(clipboardPoll)
+    clipboardPoll = null
+  }
+  window.removeEventListener('focus', tryInsertFromClipboard)
+}
+
+onUnmounted(() => stopClipboardWatch())
 
 function isSteamId64(val: string) {
   return /^\d{17}$/.test(val.trim());
@@ -144,6 +191,11 @@ async function save() {
 function openApiKeyPage() {
   window.open("https://steamcommunity.com/dev/apikey", "_blank");
 }
+
+function openSteamIdPage() {
+  window.open("https://steamcommunity.com/my/", "_blank");
+  startClipboardWatch()
+}
 </script>
 
 <template>
@@ -165,6 +217,11 @@ function openApiKeyPage() {
           :placeholder="t('setupApiKeyPlaceholder')"
           @keyup.enter="save"
         />
+        <div v-if="configPath" class="config-path-row" :title="configPath">
+          <span class="config-path-label">{{ t("setupConfigPath") }}:</span>
+          <span class="config-path-value">{{ configPath }}</span>
+          <button class="config-path-btn" type="button" :title="t('setupConfigPathOpen')" @click="openConfigPath">…</button>
+        </div>
         <button class="help-link" type="button" @click="openApiKeyPage">
           {{ t("setupGetApiKey") }}
         </button>
@@ -185,13 +242,18 @@ function openApiKeyPage() {
             class="resolve-btn"
             :disabled="resolving"
             type="button"
+            :title="t('setupUsernameHint')"
             @click="resolveInput"
           >
             {{ resolving ? "..." : "→" }}
           </button>
         </div>
         <p v-if="resolveHint" class="form-ok">{{ resolveHint }}</p>
+        <p v-if="error && !resolveHint" class="form-warn">⚠ {{ error }}</p>
         <p class="form-hint">{{ t("setupUsernameHint") }}</p>
+        <button class="help-link" type="button" @click="openSteamIdPage">
+          {{ t("setupGetSteamId") }}
+        </button>
       </div>
 
       <div class="form-group">
@@ -234,8 +296,6 @@ function openApiKeyPage() {
       <button class="save-btn" :disabled="saving" @click="save">
         {{ saving ? t("setupSaving") : t("setupSaveStart") }}
       </button>
-
-      <p class="privacy-note">{{ t("setupPrivacyNote") }}</p>
     </div>
   </div>
 </template>
@@ -243,19 +303,22 @@ function openApiKeyPage() {
 <style scoped>
 .setup-view {
   flex: 1;
-  overflow-y: auto;
-  padding: 32px 24px;
+  overflow: hidden;
+  padding: 16px 24px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  justify-content: center;
+  gap: 18px;
+  min-height: 0;
 }
 .setup-hero {
   text-align: center;
+  flex-shrink: 0;
 }
 .hero-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  font-size: 32px;
+  margin-bottom: 8px;
 }
 .hero-title {
   font-size: 22px;
@@ -282,9 +345,10 @@ function openApiKeyPage() {
 .setup-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   width: 100%;
   max-width: 360px;
+  flex-shrink: 0;
 }
 .form-group {
   display: flex;
@@ -381,9 +445,50 @@ function openApiKeyPage() {
 .help-link:hover {
   text-decoration: underline;
 }
+.config-path-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  overflow: hidden;
+}
+.config-path-label {
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.config-path-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+.config-path-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.config-path-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
 .resolve-row {
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 .resolve-row .form-input {
   flex: 1;
@@ -396,6 +501,10 @@ function openApiKeyPage() {
   cursor: pointer;
   font-size: 16px;
   padding: 0 14px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.15s;
   flex-shrink: 0;
 }
@@ -441,6 +550,7 @@ function openApiKeyPage() {
   padding: 12px;
   transition: all 0.15s;
   width: 100%;
+  margin-bottom: 16px;
 }
 .save-btn:hover:not(:disabled) {
   background: #6366f1;

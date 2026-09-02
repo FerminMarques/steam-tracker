@@ -12,6 +12,9 @@ const steamApi = {
     ipcRenderer.invoke('steam:clear-config'),
   saveLanguage: (lang: string): Promise<boolean> =>
     ipcRenderer.invoke('steam:save-language', lang),
+  getConfigPath: (): Promise<string> => ipcRenderer.invoke('config:get-path'),
+  openConfigPath: (): Promise<boolean> => ipcRenderer.invoke('config:open-path'),
+  getClipboardText: (): Promise<string> => ipcRenderer.invoke('clipboard:read'),
   getCurrentGame: (): Promise<ApiResult<SteamGame>> =>
     ipcRenderer.invoke('steam:get-current-game'),
   getGameArt: (appId: string): Promise<string | null> =>
