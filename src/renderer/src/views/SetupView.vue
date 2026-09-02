@@ -17,6 +17,7 @@ const hotkeyDisplay = ref("Ctrl+Shift+S");
 const recordingHotkey = ref(false);
 const hotkeyError = ref("");
 const language = ref("english");
+const configPath = ref("");
 
 const LANGUAGES = [
   { value: 'english', label: 'English' },
@@ -49,7 +50,14 @@ onMounted(async () => {
     steamId.value = cfg.steamId;
     resolveHint.value = t("setupSteamIdIs", { id: cfg.steamId });
   }
+  try {
+    configPath.value = await window.steamApi.getConfigPath();
+  } catch {}
 });
+
+function openConfigPath() {
+  window.steamApi.openConfigPath();
+}
 
 function isSteamId64(val: string) {
   return /^\d{17}$/.test(val.trim());
@@ -165,7 +173,11 @@ function openApiKeyPage() {
           :placeholder="t('setupApiKeyPlaceholder')"
           @keyup.enter="save"
         />
-        <p class="form-hint">{{ t("setupPrivacyNote") }}</p>
+        <div v-if="configPath" class="config-path-row" :title="configPath">
+          <span class="config-path-label">{{ t("setupConfigPath") }}:</span>
+          <span class="config-path-value">{{ configPath }}</span>
+          <button class="config-path-btn" type="button" :title="t('setupConfigPathOpen')" @click="openConfigPath">…</button>
+        </div>
         <button class="help-link" type="button" @click="openApiKeyPage">
           {{ t("setupGetApiKey") }}
         </button>
@@ -237,8 +249,6 @@ function openApiKeyPage() {
       <button class="save-btn" :disabled="saving" @click="save">
         {{ saving ? t("setupSaving") : t("setupSaveStart") }}
       </button>
-
-      <p class="privacy-note">{{ t("setupPrivacyNote") }}</p>
     </div>
   </div>
 </template>
@@ -246,19 +256,22 @@ function openApiKeyPage() {
 <style scoped>
 .setup-view {
   flex: 1;
-  overflow-y: auto;
-  padding: 32px 24px;
+  overflow: hidden;
+  padding: 16px 24px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  justify-content: center;
+  gap: 18px;
+  min-height: 0;
 }
 .setup-hero {
   text-align: center;
+  flex-shrink: 0;
 }
 .hero-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  font-size: 32px;
+  margin-bottom: 8px;
 }
 .hero-title {
   font-size: 22px;
@@ -285,9 +298,10 @@ function openApiKeyPage() {
 .setup-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   width: 100%;
   max-width: 360px;
+  flex-shrink: 0;
 }
 .form-group {
   display: flex;
@@ -383,6 +397,46 @@ function openApiKeyPage() {
 }
 .help-link:hover {
   text-decoration: underline;
+}
+.config-path-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  overflow: hidden;
+}
+.config-path-label {
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.config-path-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+.config-path-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.config-path-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
 }
 .resolve-row {
   display: flex;

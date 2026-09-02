@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell, globalShortcut } from 'electron'
+import { join } from 'path'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { store } from './store'
 import {
@@ -28,6 +29,11 @@ app.whenReady().then(() => {
     language: store.get('language', 'english') as string,
     theme: store.get('theme', 'violet') as string
   }))
+  ipcMain.handle('config:get-path', () => join(app.getPath('userData'), 'config.json'))
+  ipcMain.handle('config:open-path', () => {
+    shell.showItemInFolder(join(app.getPath('userData'), 'config.json'))
+    return true
+  })
 
   ipcMain.handle('theme:set', (_, theme: string) => {
     store.set('theme', theme)
