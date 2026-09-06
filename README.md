@@ -6,13 +6,32 @@ Overlay de escritorio always-on-top para trackear logros de Steam en tiempo real
 ![stack](https://img.shields.io/badge/Electron-Vue%203%20--%20Pinia-818cf8)
 ![brand](https://img.shields.io/badge/brand-ACHIVIO-818cf8)
 
+## Descarga e instalación
+
+Bajá el último release de la pestaña **Releases** de GitHub. Tenés dos opciones:
+
+- **Portable** (`Achivio-*-portable.exe`) — un solo archivo, lo ejecutás y listo. Ideal para probar.
+- **Instalador** (`Achivio Setup *.exe`) — instala con acceso directo y desinstalador.
+
+Requisitos: Windows 10/11 x64, Steam instalado y el juego en modo **Borderless Windowed** (si no, el overlay queda detrás del juego).
+
+> Los exes no están firmados con certificado, así que Windows SmartScreen muestra una advertencia la primera vez — es normal en builds indie: *Más información → Ejecutar de todas formas*.
+
+## Primer arranque
+
+1. Conseguí tu **Steam Web API key** gratuita en [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey) y pegala.
+2. Pegá tu **SteamID de 17 dígitos** (o tu vanity URL/nombre — con la API key lo resuelve solo). Si no sabés cuál es, el botón *Find your SteamID →* te lleva a averiguarlo.
+3. Elegí idioma y hotkey, *Save & Start Tracking* e iniciá un juego de Steam.
+
 ## Features
 
 - 🎯 **Tracking en vivo** — detecta el juego que estás corriendo y muestra tu progreso de logros al instante
 - 📌 **Pins + Focus mode** — pineá los logros que estás persiguiendo y colapsá el overlay a un panel compacto
+- 🖱️ **Click-through** — deja pasar los clics al juego (ideal point-and-clicks), con hotkey global configurable
 - 🔢 **Progreso numérico** — detección automática de progreso (ej. 221/300) vía stats de Steam, o tracking manual con hotkeys
 - 📖 **Guías integradas** — buscador de guías (Steam Community, YouTube) con lector de texto dentro del overlay, sin salir del juego
-- ⌨️ **Global hotkeys** — mostrar/ocultar overlay, toggle focus, +/- progreso manual
+- 🪟 **Panel de guías separado** — abrí una guía en su propia ventana redimensionable siempre visible
+- ⌨️ **Global hotkeys** — mostrar/ocultar overlay, toggle focus, click-through, +/- progreso manual
 - 🎨 **Temas** — 6 colores de acento configurables, opacidad ajustable
 - 🌐 **Multi-idioma** — nombres de logros en 12 idiomas
 
@@ -33,6 +52,9 @@ bun run dev
 
 # build de producción
 bun run build
+
+# instalador + portable (.exe) en dist/
+bun run dist
 ```
 
 Typecheck:
