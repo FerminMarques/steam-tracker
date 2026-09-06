@@ -206,15 +206,25 @@ function fixIconUrl(url: string): string {
 /** Resolve the best header image for a game.
  *  Legacy games have predictable capsule paths; newer ones use hashed
  *  store_item_assets only discoverable via the appdetails endpoint. */
-const artCache = new Map<string, string>()
+const ART_CACHE_MAX = 200
+const artCache = new Map<string, string | null>()
+
+function cacheArt(appId: string, url: string | null): void {
+  if (artCache.has(appId)) artCache.delete(appId)
+  artCache.set(appId, url)
+  if (artCache.size > ART_CACHE_MAX) {
+    const oldest = artCache.keys().next().value
+    if (oldest !== undefined) artCache.delete(oldest)
+  }
+}
 
 export async function getGameArt(appId: string): Promise<string | null> {
-  if (artCache.has(appId)) return artCache.get(appId)!
+  if (artCache.has(appId)) return artCache.get(appId) ?? null
   const legacy = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/capsule_184x69.jpg`
   try {
     const head = await axios.head(legacy, { timeout: 8000 })
     if (head.status === 200) {
-      artCache.set(appId, legacy)
+      cacheArt(appId, legacy)
       return legacy
     }
   } catch {
@@ -227,12 +237,14 @@ export async function getGameArt(appId: string): Promise<string | null> {
     const data = res.data?.[appId]?.data
     const url = (data?.capsule_image || data?.header_image || '') as string
     if (url) {
-      artCache.set(appId, url)
+      cacheArt(appId, url)
       return url
     }
   } catch {
-    // network failure — leave uncached so we retry next poll cycle change
+    // network failure — cache the miss so we don't hammer Steam every poll; cleared on game change
   }
+  // Negative cache: no art for this appId (or transient failure) — avoids repeat HEAD/appdetails storms
+  cacheArt(appId, null)
   return null
 }
 

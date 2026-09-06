@@ -65,9 +65,18 @@ app.whenReady().then(() => {
   // --- Known 100% guides for a game ---
   ipcMain.handle('best-guides:get', (_, appId: string) => getBestGuides(appId))
 
-  // --- Open URL in default browser ---
+  // --- Open URL in default browser (http(s) only: scraped guide URLs are untrusted) ---
   ipcMain.on('open:url', (_, url: string) => {
-    shell.openExternal(url)
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        console.warn(`[open:url] blocked non-http protocol: ${parsed.protocol}`)
+        return
+      }
+      void shell.openExternal(parsed.toString())
+    } catch {
+      console.warn('[open:url] blocked invalid URL')
+    }
   })
 
   // --- Window controls ---

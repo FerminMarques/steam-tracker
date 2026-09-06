@@ -32,7 +32,16 @@ export function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url)
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        console.warn(`[window-open] blocked non-http protocol: ${parsed.protocol}`)
+        return { action: 'deny' }
+      }
+      void shell.openExternal(parsed.toString())
+    } catch {
+      console.warn('[window-open] blocked invalid URL')
+    }
     return { action: 'deny' }
   })
 

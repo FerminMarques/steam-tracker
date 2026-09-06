@@ -1,7 +1,13 @@
 import axios from 'axios'
 
-// Bypasses the Steam age/mature-content gate so guide pages render fully
-const STEAM_COOKIES = 'wants_mature_content=1; birthtime=568022400; lastagecheckage=1-January-1988; mature_content=1'
+// Bypasses the Steam age/mature-content gate so guide pages render fully.
+// Birthdate is computed (30 years ago) instead of a hardcoded 1988 stamp so the
+// cookie always reads as an adult and doesn't fingerprint every install identically.
+function getSteamCookies(): string {
+  const birthtime = Math.floor(Date.now() / 1000) - 30 * 365 * 24 * 3600
+  const checkDate = new Date(birthtime * 1000).toUTCString().replace(/^\w+, /, '')
+  return `wants_mature_content=1; birthtime=${birthtime}; lastagecheckage=${checkDate}; mature_content=1`
+}
 
 /** Boilerplate/nav markers — if enough show up, extraction yielded junk instead of guide content */
 const BOILERPLATE_MARKERS = [
@@ -155,7 +161,7 @@ async function getHtml(url: string): Promise<string> {
     timeout: 15000,
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
-      ...(url.includes('steamcommunity.com') ? { Cookie: STEAM_COOKIES } : {})
+      ...(url.includes('steamcommunity.com') ? { Cookie: getSteamCookies() } : {})
     },
     maxRedirects: 5
   })
