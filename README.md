@@ -35,12 +35,6 @@ Requisitos: Windows 10/11 x64, Steam instalado y el juego en modo **Borderless W
 - 🎨 **Temas** — 6 colores de acento configurables, opacidad ajustable
 - 🌐 **Multi-idioma** — nombres de logros en 12 idiomas
 
-## Apoyá el proyecto
-
-ACHIVIO es gratis y open-source. Si te sirve, invitame un café:
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/fmarquesdev)
-
 ## Cómo funciona
 
 La app consulta la Steam Web API con tu propia API key (se configura en el primer arranque) para detectar tu juego actual y sus logros. Todo se guarda localmente (`userData/config.json`) — no hay backend ni telemetría.
