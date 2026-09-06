@@ -10,6 +10,9 @@ const en = {
   titlebarPinnedOff: "Not pinned (click to pin on top)",
   titlebarMinimize: "Minimize",
   titlebarClose: "Close",
+  titlebarClickThroughOn: "Click-through ON — clicks pass to the game ({key} to interact)",
+  titlebarClickThroughOff: "Click-through OFF — let clicks pass to the game (point-and-click safe)",
+  clickThroughBanner: "Clicks pass through to the game · {key} to interact",
 
   dashRefreshAchievements: "Refresh achievements",
   dashCheckNow: "Check now",
@@ -76,6 +79,9 @@ const en = {
   settingsOverlayHotkeyHint: "Press this anywhere to show/hide the overlay",
   settingsFocusHotkey: "Focus Mode Hotkey",
   settingsFocusHotkeyHint: "Toggle focus mode (pinned achievements only)",
+  settingsClickThroughHotkey: "Click-Through Hotkey",
+  settingsClickThroughHotkeyHint:
+    "While gaming, toggle whether clicks pass through the overlay to the game. When click-through is on, only this hotkey brings control back.",
   settingsProgressKeys: "Progress Keys",
   settingsProgressKeysHint:
     "Global keys to adjust manual progress in focus mode",
@@ -135,6 +141,9 @@ const es: Record<MessageKey, string> = {
   titlebarPinnedOff: "Sin fijar (clic para fijar arriba)",
   titlebarMinimize: "Minimizar",
   titlebarClose: "Cerrar",
+  titlebarClickThroughOn: "Click-through ACTIVADO — los clics llegan al juego ({key} para interactuar)",
+  titlebarClickThroughOff: "Click-through DESACTIVADO — deja pasar los clics al juego (ideal point-and-click)",
+  clickThroughBanner: "Los clics llegan al juego · {key} para interactuar",
 
   dashRefreshAchievements: "Actualizar logros",
   dashCheckNow: "Comprobar ahora",
@@ -203,6 +212,9 @@ const es: Record<MessageKey, string> = {
     "Pulsa esto en cualquier lugar para mostrar/ocultar el overlay",
   settingsFocusHotkey: "Atajo del modo enfoque",
   settingsFocusHotkeyHint: "Alternar modo enfoque (solo logros fijados)",
+  settingsClickThroughHotkey: "Atajo de click-through",
+  settingsClickThroughHotkeyHint:
+    "Mientras juegas, alterna si los clics atraviesan el overlay hacia el juego. Con click-through activo, solo este atajo devuelve el control.",
   settingsProgressKeys: "Teclas de progreso",
   settingsProgressKeysHint:
     "Teclas globales para ajustar el progreso manual en modo enfoque",

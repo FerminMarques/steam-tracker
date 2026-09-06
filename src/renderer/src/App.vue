@@ -16,16 +16,22 @@ const settingsHotkey = ref("CommandOrControl+Shift+S");
 const settingsHotkeyDisplay = ref("Ctrl+Shift+S");
 const settingsFocusHotkey = ref("CommandOrControl+Shift+F");
 const settingsFocusHotkeyDisplay = ref("Ctrl+Shift+F");
+const settingsClickHotkey = ref("CommandOrControl+Shift+C");
+const settingsClickHotkeyDisplay = ref("Ctrl+Shift+C");
+const clickHotkeyLabel = ref("Ctrl+Shift+C");
 const settingsOpacity = ref(1);
 const recordingHotkey = ref(false);
 const recordingFocusHotkey = ref(false);
+const recordingClickHotkey = ref(false);
 const hotkeyError = ref("");
 const focusHotkeyError = ref("");
+const clickHotkeyError = ref("");
 const settingsLanguage = ref("english");
 const settingsTheme = ref("violet");
 const progressDownKey = ref("9");
 const progressUpKey = ref("0");
 let removeFocusListener: (() => void) | null = null;
+let removeClickThroughListener: (() => void) | null = null;
 
 const THEMES = [
   { value: "violet", color: "#818cf8" },
@@ -77,10 +83,18 @@ onMounted(async () => {
       store.toggleFocusMode();
     }
   });
+  await store.loadClickThrough();
+  removeClickThroughListener = window.steamApi.onClickThroughChanged((val) => {
+    store.clickThrough = val;
+  });
+  try {
+    clickHotkeyLabel.value = formatHotkey(await window.steamApi.getClickThroughHotkey());
+  } catch { /* default label */ }
 });
 
 onUnmounted(() => {
   removeFocusListener?.();
+  removeClickThroughListener?.();
 });
 
 watch(
@@ -101,6 +115,9 @@ async function openSettings() {
   settingsHotkeyDisplay.value = formatHotkey(settingsHotkey.value);
   settingsFocusHotkey.value = await window.steamApi.getFocusHotkey();
   settingsFocusHotkeyDisplay.value = formatHotkey(settingsFocusHotkey.value);
+  settingsClickHotkey.value = await window.steamApi.getClickThroughHotkey();
+  settingsClickHotkeyDisplay.value = formatHotkey(settingsClickHotkey.value);
+  clickHotkeyLabel.value = settingsClickHotkeyDisplay.value;
   settingsOpacity.value = await window.steamApi.getOpacity();
   const cfg = await window.steamApi.getConfig();
   settingsLanguage.value = cfg.language || 'english';
@@ -110,8 +127,10 @@ async function openSettings() {
   progressUpKey.value = pkeys.up;
   hotkeyError.value = "";
   focusHotkeyError.value = "";
+  clickHotkeyError.value = "";
   recordingHotkey.value = false;
   recordingFocusHotkey.value = false;
+  recordingClickHotkey.value = false;
   showSettings.value = true;
 }
 
@@ -151,7 +170,15 @@ function startRecording() {
 function startRecordingFocus() {
   recordingFocusHotkey.value = true;
   recordingHotkey.value = false;
+  recordingClickHotkey.value = false;
   focusHotkeyError.value = "";
+}
+
+function startRecordingClick() {
+  recordingClickHotkey.value = true;
+  recordingHotkey.value = false;
+  recordingFocusHotkey.value = false;
+  clickHotkeyError.value = "";
 }
 
 function buildAccelerator(e: KeyboardEvent): string | null {
@@ -165,8 +192,9 @@ function buildAccelerator(e: KeyboardEvent): string | null {
   return parts.join("+");
 }
 
-async function recordAccelerator(e: KeyboardEvent, kind: "overlay" | "focus") {
-  const recording = kind === "overlay" ? recordingHotkey : recordingFocusHotkey;
+async function recordAccelerator(e: KeyboardEvent, kind: "overlay" | "focus" | "click") {
+  const recording =
+    kind === "overlay" ? recordingHotkey : kind === "focus" ? recordingFocusHotkey : recordingClickHotkey;
   if (!recording.value) return;
   e.preventDefault();
   e.stopPropagation();
@@ -176,21 +204,29 @@ async function recordAccelerator(e: KeyboardEvent, kind: "overlay" | "focus") {
   const ok =
     kind === "overlay"
       ? await window.steamApi.setHotkey(accelerator)
-      : await window.steamApi.setFocusHotkey(accelerator);
+      : kind === "focus"
+        ? await window.steamApi.setFocusHotkey(accelerator)
+        : await window.steamApi.setClickThroughHotkey(accelerator);
   if (ok) {
     if (kind === "overlay") {
       settingsHotkey.value = accelerator;
       settingsHotkeyDisplay.value = formatHotkey(accelerator);
-    } else {
+    } else if (kind === "focus") {
       settingsFocusHotkey.value = accelerator;
       settingsFocusHotkeyDisplay.value = formatHotkey(accelerator);
+    } else {
+      settingsClickHotkey.value = accelerator;
+      settingsClickHotkeyDisplay.value = formatHotkey(accelerator);
+      clickHotkeyLabel.value = settingsClickHotkeyDisplay.value;
     }
     hotkeyError.value = "";
     focusHotkeyError.value = "";
+    clickHotkeyError.value = "";
   } else {
     const msg = t("settingsHotkeyInUse");
     if (kind === "overlay") hotkeyError.value = msg;
-    else focusHotkeyError.value = msg;
+    else if (kind === "focus") focusHotkeyError.value = msg;
+    else clickHotkeyError.value = msg;
   }
 }
 
@@ -205,6 +241,9 @@ async function logout() {
 <template>
   <div class="app-root app-hud-texture" :class="{ 'focus-mode': store.focusMode }">
     <TitleBar v-if="!store.focusMode" @open-settings="openSettings" />
+    <div v-if="store.clickThrough && !store.focusMode" class="clickthrough-banner">
+      <span>{{ t("clickThroughBanner").replace("{key}", clickHotkeyLabel) }}</span>
+    </div>
     <div v-if="loading" class="loading-screen">
       <div class="spinner"></div>
     </div>
@@ -264,6 +303,25 @@ async function logout() {
               </div>
               <p v-if="focusHotkeyError" class="settings-warn">⚠ {{ focusHotkeyError }}</p>
               <p class="settings-hint">{{ t("settingsFocusHotkeyHint") }}</p>
+            </div>
+
+            <!-- Click-Through Hotkey -->
+            <div class="settings-section">
+              <div class="settings-label">{{ t("settingsClickThroughHotkey") }}</div>
+              <div
+                class="hotkey-input"
+                :class="{ recording: recordingClickHotkey }"
+                tabindex="0"
+                @click="startRecordingClick"
+                @keydown="recordAccelerator($event, 'click')"
+                @blur="recordingClickHotkey = false"
+              >
+                <span v-if="recordingClickHotkey" class="recording-hint">{{ t("settingsPressShortcut") }}</span>
+                <span v-else class="hotkey-value">{{ settingsClickHotkeyDisplay }}</span>
+                <span class="hotkey-edit-icon">{{ recordingClickHotkey ? '⌨' : '✎' }}</span>
+              </div>
+              <p v-if="clickHotkeyError" class="settings-warn">⚠ {{ clickHotkeyError }}</p>
+              <p class="settings-hint">{{ t("settingsClickThroughHotkeyHint") }}</p>
             </div>
 
             <!-- Progress Keys -->
@@ -395,6 +453,23 @@ async function logout() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.clickthrough-banner {
+  display: flex;
+  justify-content: center;
+  padding: 4px 10px;
+  background: rgba(129, 140, 248, 0.1);
+  border-bottom: 1px solid var(--accent-border);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--accent);
+  pointer-events: none;
+  user-select: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Settings modal */

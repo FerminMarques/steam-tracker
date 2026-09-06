@@ -24,6 +24,10 @@ export function createWindow(): void {
   mainWindow.on('ready-to-show', () => {
     // Pin on top by default
     mainWindow.setAlwaysOnTop(true, 'screen-saver')
+    // Restore click-through (point-and-click games): mouse passes to the game
+    if (store.get('clickThrough', 'false') === 'true') {
+      mainWindow.setIgnoreMouseEvents(true, { forward: true })
+    }
     mainWindow.show()
     // Notify renderer of initial pin state (may have mounted before ready-to-show)
     mainWindow.webContents.send('window:top-changed', true)

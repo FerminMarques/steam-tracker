@@ -38,6 +38,9 @@ export const useAppStore = defineStore('app', () => {
   const searchQuery = ref('')
   const sortBy = ref<'default' | 'rarity' | 'name'>('default')
   const isOnTop = ref(false)
+  // Click-through: overlay ignores the mouse so clicks reach point-and-click games.
+  // While on, only the global hotkey can toggle back (the window can't be clicked).
+  const clickThrough = ref(false)
   const pinnedAchievements = ref<Set<string>>(new Set())
   const pinnedGuides = ref<Map<string, Guide>>(new Map())
   const focusMode = ref(false)
@@ -400,6 +403,22 @@ const NON_READABLE_URL_RE = /youtube\.com|youtu\.be|steamcommunity\.com\/app\/[^
     }
   }
 
+  /** Click-through state lives main-side (applies to overlay + guide panel together) */
+  async function loadClickThrough() {
+    try {
+      clickThrough.value = await window.steamApi.getClickThrough()
+    } catch { /* default off */ }
+  }
+
+  function setClickThrough(val: boolean) {
+    clickThrough.value = val
+    window.steamApi.setClickThrough(val)
+  }
+
+  function toggleClickThrough() {
+    setClickThrough(!clickThrough.value)
+  }
+
   const completedPercent = computed(() => {
     if (!achievements.value.length) return 0
     return Math.round((completed.value.length / achievements.value.length) * 100)
@@ -611,7 +630,8 @@ const NON_READABLE_URL_RE = /youtube\.com|youtu\.be|steamcommunity\.com\/app\/[^
   return {
     currentGame, achievements, selectedAchievement, guides, currentGameArt,
     loadingGame, loadingAchievements, loadingGuides, activeTab,
-    searchQuery, sortBy, isOnTop, pinnedAchievements, pinnedGuides, focusMode,
+    searchQuery, sortBy, isOnTop, clickThrough, loadClickThrough, setClickThrough, toggleClickThrough,
+    pinnedAchievements, pinnedGuides, focusMode,
     expandedGuides, manualProgress, achievementsError,
     readerGuide, loadingReader, openGuideReader, closeGuideReader,
     guidePanelOpen, openGuidePanel, bestGuides, openBestGuidePanel,

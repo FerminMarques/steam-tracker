@@ -19,6 +19,11 @@ function handleOpenerClosed(): void {
   closeGuidePanel()
 }
 
+/** Click-through follows the global overlay state so the panel never blocks game clicks either */
+export function setGuidePanelClickThrough(enabled: boolean): void {
+  if (panel && !panel.isDestroyed()) panel.setIgnoreMouseEvents(enabled, { forward: true })
+}
+
 export function openGuidePanel(parent: BrowserWindow, data: GuidePanelPayload): void {
   lastData = data
   // Avoid stacking 'closed' listeners when reopening from the same parent,
@@ -49,6 +54,9 @@ export function openGuidePanel(parent: BrowserWindow, data: GuidePanelPayload): 
     })
     // Same level as the overlay so it stays visible in borderless windowed games
     panel.setAlwaysOnTop(true, 'screen-saver')
+    if (store.get('clickThrough', 'false') === 'true') {
+      panel.setIgnoreMouseEvents(true, { forward: true })
+    }
     panel.on('closed', () => {
       panel = null
       opener?.webContents.send('guide-panel:closed')

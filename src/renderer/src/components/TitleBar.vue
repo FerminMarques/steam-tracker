@@ -47,7 +47,7 @@ const toggleTop = () => window.steamApi.toggleTop();
         "
         @click="store.toggleFocusMode()"
       >
-        <Icon name="target" :size="14" />
+        <Icon name="target" :size="12" />
       </button>
       <button
         class="tb-btn tb-pin"
@@ -60,6 +60,18 @@ const toggleTop = () => window.steamApi.toggleTop();
         @click="toggleTop"
       >
         <span class="pin-dot"></span>
+      </button>
+      <button
+        class="tb-btn tb-click"
+        :class="{ active: store.clickThrough }"
+        :title="
+          store.clickThrough
+            ? t('titlebarClickThroughOn')
+            : t('titlebarClickThroughOff')
+        "
+        @click="store.toggleClickThrough()"
+      >
+        <Icon name="mouse" :size="12" />
       </button>
       <button class="tb-btn" :title="t('titlebarMinimize')" @click="minimize"><Icon name="minus" :size="13" /></button>
       <button class="tb-btn tb-close" :title="t('titlebarClose')" @click="close"><Icon name="close" :size="12" /></button>
@@ -122,16 +134,29 @@ const toggleTop = () => window.steamApi.toggleTop();
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  outline: none;
 }
 .tb-btn:hover {
   background: var(--surface-hover);
   color: var(--text);
 }
-.tb-pin {
-  display: flex;
+/* Keyboard focus uses the same treatment for every button — no browser-default glow */
+.tb-btn:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+/* Caja estrictamente idéntica para foco, pin y click-through: el glifo
+   (punto 8px vs SVG 12px) va centrado dentro, pero la caja no depende del contenido */
+.tb-focus,
+.tb-pin,
+.tb-click {
+  box-sizing: border-box;
+  height: 22px;
+  min-width: 28px;
+  padding: 0 6px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 8px;
   border: 1px solid transparent;
 }
 .pin-dot {
@@ -166,10 +191,28 @@ const toggleTop = () => window.steamApi.toggleTop();
   background: rgba(248, 113, 113, 0.4);
   color: #fff;
 }
+/* Solo color base propio; caja y estados heredados del bloque compartido */
+.tb-click {
+  color: var(--text-secondary);
+}
+.tb-click:not(.active) {
+  border-color: var(--border);
+}
+.tb-click:not(.active):hover {
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+.tb-click.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.tb-click.active:hover {
+  background: rgba(129, 140, 248, 0.18);
+}
 .tb-focus {
   font-size: 12px;
-  padding: 2px 6px;
-  border: 1px solid transparent;
 }
 .tb-focus:not(.active) {
   border-color: rgba(251, 191, 36, 0.2);
