@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 out/
+dist/
+dist-icon/
 *.tsbuildinfo
 
 # AI tooling (autoskills)
