@@ -7,13 +7,24 @@ import { t, setUiLanguage } from "../i18n";
 const title = ref("");
 const url = ref("");
 const content = ref("");
+const loadError = ref<string | null>(null);
 const sticky = ref(true);
 let removeDataListener: (() => void) | null = null;
 
-function applyData(d: { title: string; url: string; content: string }) {
+function applyData(d: { title: string; url: string; content: string; error?: string | null }) {
+  const isNewGuide = d.url !== url.value;
   title.value = d.title;
   url.value = d.url;
-  if (d.content) content.value = d.content;
+  // A new guide resets state; an error update stops the spinner with a notice (no retry loop)
+  if (isNewGuide) {
+    content.value = "";
+    loadError.value = null;
+  }
+  if (d.error) loadError.value = d.error;
+  else if (d.content) {
+    content.value = d.content;
+    loadError.value = null;
+  }
 }
 
 function openExternal() {
@@ -68,9 +79,15 @@ onUnmounted(() => {
       </button>
     </div>
     <div class="gp-body">
-      <div v-if="!content" class="gp-loading">
+      <div v-if="!content && !loadError" class="gp-loading">
         <div class="spinner"></div>
         <span>{{ t("readerLoading") }}</span>
+      </div>
+      <div v-else-if="loadError" class="gp-error">
+        <p class="gp-error-title">{{ t("readerLoadFailed") }}</p>
+        <p v-if="loadError === 'blocked'" class="gp-error-desc">{{ t("readerLoadFailedBlocked") }}</p>
+        <p v-else class="gp-error-desc">{{ t("readerLoadFailedHint").replace("{error}", loadError) }}</p>
+        <button class="gp-open-ext" @click="openExternal">{{ t("readerOpenBrowserFooter") }}</button>
       </div>
       <GuideContent v-else :content="content" />
     </div>
@@ -145,5 +162,37 @@ onUnmounted(() => {
   gap: 10px;
   color: var(--text-secondary);
   font-size: 12px;
+}
+.gp-error {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 16px;
+}
+.gp-error-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.gp-error-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.gp-open-ext {
+  margin-top: 4px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 5px;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 5px 12px;
 }
 </style>

@@ -26,6 +26,37 @@ function looksLikeJunk(text: string): boolean {
   return false
 }
 
+/** Cloudflare / WAF / error pages — never real guide content (e.g. Error 1014 CNAME Cross-User Banned) */
+const ERROR_PAGE_RES = [
+  /error\s*1014/i,
+  /cname.*cross-user banned/i,
+  /cross-user.*banned/i,
+  /cloudflare.*ray id/i,
+  /ray id:\s*[0-9a-f]+/i,
+  /just a moment.*checking your browser/i,
+  /verify you are human/i,
+  /attention required.*cloudflare/i,
+  /access denied.*reference #/i,
+  /403 forbidden.*cloudflare/i
+]
+
+function isErrorPage(html: string): boolean {
+  if (!html || html.length < 500) return false
+  let hits = 0
+  for (const re of ERROR_PAGE_RES) {
+    if (re.test(html) && ++hits >= 1) return true
+  }
+  // Generic Cloudflare challenge shell without readable article
+  if (/cdn-cgi\/challenge-platform/i.test(html) && !/subSectionDesc|article|guide/i.test(html)) return true
+  return false
+}
+
+export interface GuideFetchResult {
+  success: boolean
+  content: string
+  error?: string
+}
+
 function stripTags(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
@@ -140,14 +171,21 @@ async function getHtml(url: string): Promise<string> {
   }
 }
 
-/** Fetch a guide page and reduce it to readable text around the achievement mention */
+/** Fetch a guide page and reduce it to readable text around the achievement mention.
+ *  Never throws and never retries in a loop: a single attempt, then { success:false, error } so the
+ *  renderer can notify instead of spinning forever. */
 export async function fetchGuideContent(
   url: string,
   achievementName: string,
   full = false
-): Promise<{ success: boolean; content: string }> {
+): Promise<GuideFetchResult> {
   try {
     const html: string = await getHtml(url)
+    // Blocked / challenge pages (Cloudflare 1014, captcha, etc.) are not guide content
+    if (isErrorPage(html)) {
+      console.warn(`[scrape] blocked error page for ${url}`)
+      return { success: false, content: '', error: 'blocked' }
+    }
     let text = ''
     // True when we got structured guide content (not a generic HTML fallback)
     let structured = false
@@ -161,7 +199,7 @@ export async function fetchGuideContent(
         if (text) structured = true
       }
       // Steam page chrome is never useful content — don't fall through to generic extraction
-      if (!structured) return { success: false, content: '' }
+      if (!structured) return { success: false, content: '', error: 'empty' }
     }
 
     // Generic fallback for non-Steam sites
@@ -169,7 +207,7 @@ export async function fetchGuideContent(
 
     // Junk guard: nav/boilerplate means the page had no readable guide content
     if (!structured && looksLikeJunk(text)) {
-      return { success: false, content: '' }
+      return { success: false, content: '', error: 'empty' }
     }
 
     // Full mode keeps the whole guide; otherwise trim to the relevant section and cap length
@@ -194,8 +232,18 @@ export async function fetchGuideContent(
       if (text.length > 5000) text = text.substring(0, 5000) + '…'
     }
 
-    return { success: !!text, content: text }
-  } catch {
-    return { success: false, content: '' }
+    if (!text) return { success: false, content: '', error: 'empty' }
+    return { success: true, content: text }
+  } catch (err: any) {
+    const status = err?.response?.status
+    const code = err?.code ?? ''
+    let error = 'network'
+    if (status === 404) error = 'not-found'
+    else if (status === 403 || status === 401) error = 'forbidden'
+    else if (status === 429) error = 'rate-limited'
+    else if (code === 'ECONNABORTED' || /timeout/i.test(err?.message ?? '')) error = 'timeout'
+    else if (/1014|cname|cloudflare/i.test(String(err?.message ?? ''))) error = 'blocked'
+    console.warn(`[scrape] fetch failed ${url} status=${status ?? code} error=${error}`)
+    return { success: false, content: '', error }
   }
 }

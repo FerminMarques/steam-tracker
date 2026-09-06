@@ -7,16 +7,29 @@ export interface GuidePanelPayload {
   title: string
   url: string
   content: string
+  /** Machine-readable fetch failure: 'blocked' | 'not-found' | 'forbidden' | 'rate-limited' | 'timeout' | 'network' | 'empty' */
+  error?: string | null
 }
 
 let panel: BrowserWindow | null = null
 let opener: BrowserWindow | null = null
 let lastData: GuidePanelPayload | null = null
 
+function handleOpenerClosed(): void {
+  closeGuidePanel()
+}
+
 export function openGuidePanel(parent: BrowserWindow, data: GuidePanelPayload): void {
   lastData = data
+  // Avoid stacking 'closed' listeners when reopening from the same parent,
+  // and detach from a previous parent to prevent leaks
+  if (opener && opener !== parent && !opener.isDestroyed()) {
+    opener.removeListener('closed', handleOpenerClosed)
+  }
+  if (opener !== parent && !parent.isDestroyed()) {
+    parent.once('closed', handleOpenerClosed)
+  }
   opener = parent
-  parent.once('closed', () => closeGuidePanel())
 
   if (!panel) {
     panel = new BrowserWindow({

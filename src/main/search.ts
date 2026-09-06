@@ -57,6 +57,7 @@ export async function searchWeb(appId: string, gameName: string, achievementName
     const query = `${gameName} ${achievementName} ${suffix}`
     let html = ''
     // Try html endpoint first, then lite as fallback
+    let matchedEndpoint = ''
     for (const endpoint of ['https://html.duckduckgo.com/html/', 'https://lite.duckduckgo.com/lite/']) {
       try {
         const res = await axios.get(endpoint, {
@@ -68,10 +69,16 @@ export async function searchWeb(appId: string, gameName: string, achievementName
           timeout: 8000
         })
         html = res.data
-        if (html.includes('result__a') || html.includes('result-link')) break
+        if (html.includes('result__a') || html.includes('result-link')) {
+          matchedEndpoint = endpoint
+          break
+        }
       } catch {
         continue
       }
+    }
+    if (html && !matchedEndpoint) {
+      console.warn(`[search] DDG markup changed (no result__a/result-link) for query="${query}" htmlLen=${html.length}`)
     }
     if (html) {
       // Build a map of snippets by position
