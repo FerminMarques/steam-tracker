@@ -9,7 +9,10 @@ const url = ref("");
 const content = ref("");
 const loadError = ref<string | null>(null);
 const sticky = ref(true);
+const passThrough = ref(false);
+const passKeyLabel = ref("Ctrl+Shift+C");
 let removeDataListener: (() => void) | null = null;
+let removePassListener: (() => void) | null = null;
 
 function applyData(d: { title: string; url: string; content: string; error?: string | null }) {
   const isNewGuide = d.url !== url.value;
@@ -47,6 +50,14 @@ onMounted(async () => {
   const initial = await window.steamApi.getGuidePanelData();
   if (initial) applyData(initial);
   sticky.value = await window.steamApi.getGuidePanelSticky();
+  try {
+    passThrough.value = await window.steamApi.getClickThrough();
+    const raw = await window.steamApi.getClickThroughHotkey();
+    passKeyLabel.value = raw.replace("CommandOrControl", "Ctrl").replace("Control", "Ctrl");
+  } catch { /* defaults */ }
+  removePassListener = window.steamApi.onClickThroughChanged((val) => {
+    passThrough.value = val;
+  });
   const cfg = await window.steamApi.getConfig();
   setUiLanguage(cfg.language);
   if (cfg.theme === "violet") delete document.documentElement.dataset.theme;
@@ -55,6 +66,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   removeDataListener?.();
+  removePassListener?.();
 });
 </script>
 
@@ -77,6 +89,9 @@ onUnmounted(() => {
       <button class="gp-btn" :title="t('readerClose')" @click="closePanel">
         <Icon name="close" :size="12" />
       </button>
+    </div>
+    <div v-if="passThrough" class="gp-passthrough">
+      <span>{{ t("clickThroughBanner").replace("{key}", passKeyLabel) }}</span>
     </div>
     <div class="gp-body">
       <div v-if="!content && !loadError" class="gp-loading">
@@ -101,6 +116,20 @@ onUnmounted(() => {
   height: 100vh;
   background: #13151e;
   overflow: hidden;
+}
+.gp-passthrough {
+  display: flex;
+  justify-content: center;
+  padding: 3px 8px;
+  background: rgba(129, 140, 248, 0.1);
+  border-bottom: 1px solid var(--accent-border);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--accent);
+  pointer-events: none;
+  user-select: none;
+  flex-shrink: 0;
 }
 .gp-header {
   display: flex;

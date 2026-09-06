@@ -22,6 +22,11 @@ export interface SteamApi {
   close(): void
   toggleTop(): void
   isOnTop(): Promise<boolean>
+  getClickThrough(): Promise<boolean>
+  setClickThrough(val: boolean): void
+  onClickThroughChanged(cb: (val: boolean) => void): () => void
+  getClickThroughHotkey(): Promise<string>
+  setClickThroughHotkey(accelerator: string): Promise<boolean>
   onTopChanged(cb: (val: boolean) => void): () => void
   getHotkey(): Promise<string>
   setHotkey(accelerator: string): Promise<boolean>

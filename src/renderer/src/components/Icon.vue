@@ -2,7 +2,7 @@
 type IconName =
   | "sliders" | "target" | "check" | "close" | "minus"
   | "refresh" | "gamepad" | "trophy" | "clock" | "star"
-  | "search" | "external" | "book" | "arrow-left" | "info" | "pin";
+  | "search" | "external" | "book" | "arrow-left" | "info" | "pin" | "mouse";
 
 const props = defineProps<{ name: IconName; size?: number }>();
 
@@ -23,6 +23,7 @@ const paths: Record<IconName, string> = {
   'arrow-left': '<line x1="19.5" y1="12" x2="5" y2="12"/><polyline points="11 5.5 4.5 12 11 18.5"/>',
   info: '<circle cx="12" cy="12" r="8.5"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/>',
   pin: '<line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>',
+  mouse: '<rect x="7" y="3" width="10" height="18" rx="5"/><line x1="12" y1="7" x2="12" y2="10"/>',
 };
 
 const size = props.size ?? 14;

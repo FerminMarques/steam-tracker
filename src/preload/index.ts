@@ -32,6 +32,15 @@ const steamApi = {
   close: (): void => ipcRenderer.send('window:close'),
   toggleTop: (): void => ipcRenderer.send('window:toggle-top'),
   isOnTop: (): Promise<boolean> => ipcRenderer.invoke('window:is-on-top'),
+  getClickThrough: (): Promise<boolean> => ipcRenderer.invoke('window:get-click-through'),
+  setClickThrough: (val: boolean): void => ipcRenderer.send('window:set-click-through', val),
+  onClickThroughChanged: (cb: (val: boolean) => void): (() => void) => {
+    const handler = (_: Electron.IpcRendererEvent, val: boolean) => cb(val)
+    ipcRenderer.on('window:click-through-changed', handler)
+    return () => ipcRenderer.off('window:click-through-changed', handler)
+  },
+  getClickThroughHotkey: (): Promise<string> => ipcRenderer.invoke('click-hotkey:get'),
+  setClickThroughHotkey: (accelerator: string): Promise<boolean> => ipcRenderer.invoke('click-hotkey:set', accelerator),
   onTopChanged: (cb: (val: boolean) => void): (() => void) => {
     const handler = (_: Electron.IpcRendererEvent, val: boolean) => cb(val)
     ipcRenderer.on('window:top-changed', handler)

@@ -7,6 +7,7 @@ import { t } from "../i18n";
 
 const store = useAppStore();
 const progressKeys = ref({ down: '9', up: '0' });
+const clickKeyLabel = ref('Ctrl+Shift+C');
 let removeProgressListener: (() => void) | null = null;
 
 // Measure real content height so the window always fits the pinned rows
@@ -32,6 +33,10 @@ function requestResize() {
 onMounted(async () => {
   const keys = await window.steamApi.getProgressKeys();
   progressKeys.value = keys;
+  try {
+    const raw = await window.steamApi.getClickThroughHotkey();
+    clickKeyLabel.value = raw.replace("CommandOrControl", "Ctrl").replace("Control", "Ctrl");
+  } catch { /* default label */ }
   removeProgressListener = window.steamApi.onProgressAdjust((delta: number) => {
     // Find the first pinned achievement with manual progress and adjust it
     for (const ach of store.pinned) {
@@ -83,6 +88,9 @@ function hasAutoProgress(ach: Achievement) {
 
 <template>
   <div ref="viewRef" class="focus-view">
+    <div v-if="store.clickThrough" class="focus-passthrough">
+      <span>{{ t("clickThroughBanner").replace("{key}", clickKeyLabel) }}</span>
+    </div>
     <!-- Drag handle -->
     <div class="focus-handle">
       <span class="handle-grip">⠿</span>
@@ -94,6 +102,18 @@ function hasAutoProgress(ach: Achievement) {
         @click="store.openBestGuidePanel(store.bestGuides[0])"
       >
         <Icon name="book" :size="11" />
+      </button>
+      <button
+        class="handle-btn-guide"
+        :class="{ active: store.clickThrough }"
+        :title="
+          store.clickThrough
+            ? t('titlebarClickThroughOn').replace('{key}', clickKeyLabel)
+            : t('titlebarClickThroughOff')
+        "
+        @click="store.toggleClickThrough()"
+      >
+        <Icon name="mouse" :size="11" />
       </button>
     </div>
 
@@ -170,6 +190,23 @@ function hasAutoProgress(ach: Achievement) {
   max-height: 100vh;
   overflow: hidden;
 }
+.focus-passthrough {
+  display: flex;
+  justify-content: center;
+  padding: 3px 8px;
+  background: rgba(129, 140, 248, 0.1);
+  border-bottom: 1px solid var(--accent-border);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--accent);
+  pointer-events: none;
+  user-select: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .focus-handle {
   display: flex;
   align-items: center;
@@ -212,6 +249,9 @@ function hasAutoProgress(ach: Achievement) {
 }
 .handle-btn-guide:hover {
   color: var(--text);
+}
+.handle-btn-guide.active {
+  color: var(--accent);
 }
 .focus-list {
   display: flex;

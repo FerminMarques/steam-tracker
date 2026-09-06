@@ -3,6 +3,7 @@ import { store } from './store'
 
 export const DEFAULT_HOTKEY = 'CommandOrControl+Shift+S'
 export const DEFAULT_FOCUS_HOTKEY = 'CommandOrControl+Shift+F'
+export const DEFAULT_CLICKTHROUGH_HOTKEY = 'CommandOrControl+Shift+C'
 export const DEFAULT_PROGRESS_DOWN = '9'
 export const DEFAULT_PROGRESS_UP = '0'
 
@@ -29,6 +30,24 @@ export function registerHotkeys(win: BrowserWindow, overlayAccelerator: string):
   const focusAccelerator = store.get('focusHotkey', DEFAULT_FOCUS_HOTKEY)
   tryRegister(focusAccelerator, () => {
     win.webContents.send('focus:toggle')
+  })
+  // Click-through hotkey: lets clicks pass to the game (point-and-click safe).
+  // Toggled main-side so it works while the game is focused; state is broadcast to renderers.
+  // Debounced: holding the combo fires key-repeat, which would toggle twice and look like a no-op.
+  const clickAccelerator = store.get('clickThroughHotkey', DEFAULT_CLICKTHROUGH_HOTKEY)
+  let lastClickToggle = 0
+  tryRegister(clickAccelerator, () => {
+    const now = Date.now()
+    if (now - lastClickToggle < 400) return
+    lastClickToggle = now
+    const next = !(store.get('clickThrough', 'false') === 'true')
+    store.set('clickThrough', String(next))
+    for (const w of BrowserWindow.getAllWindows()) {
+      if (!w.isDestroyed()) {
+        w.setIgnoreMouseEvents(next, { forward: true })
+        w.webContents.send('window:click-through-changed', next)
+      }
+    }
   })
   // Progress +/- hotkeys — single chars are more collision-prone, log but don't fail hard
   const progressDown = store.get('progressDownKey', DEFAULT_PROGRESS_DOWN)

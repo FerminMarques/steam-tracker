@@ -7,6 +7,7 @@ import {
   setStoredHotkey,
   DEFAULT_HOTKEY,
   DEFAULT_FOCUS_HOTKEY,
+  DEFAULT_CLICKTHROUGH_HOTKEY,
   DEFAULT_PROGRESS_DOWN,
   DEFAULT_PROGRESS_UP
 } from './hotkeys'
@@ -19,6 +20,9 @@ import type { Guide } from '../shared/types'
 
 app.whenReady().then(() => {
   store.init(app.getPath('userData'))
+  // Always start interactive: a persisted click-through ON would leave the overlay
+  // unclickable on launch (only the hotkey brings control back). The custom hotkey itself stays persisted.
+  store.set('clickThrough', 'false')
   electronApp.setAppUserModelId('com.steam-tracker')
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
@@ -94,6 +98,26 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('window:is-on-top', (e) =>
     BrowserWindow.fromWebContents(e.sender)?.isAlwaysOnTop() ?? false
+  )
+
+  // --- Click-through (point-and-click games): mouse events pass to the game ---
+  ipcMain.handle('window:get-click-through', () =>
+    store.get('clickThrough', 'false') === 'true'
+  )
+  ipcMain.on('window:set-click-through', (_, val: boolean) => {
+    store.set('clickThrough', String(!!val))
+    for (const w of BrowserWindow.getAllWindows()) {
+      if (!w.isDestroyed()) {
+        w.setIgnoreMouseEvents(!!val, { forward: true })
+        w.webContents.send('window:click-through-changed', !!val)
+      }
+    }
+  })
+
+  // --- Click-through Hotkey ---
+  ipcMain.handle('click-hotkey:get', () => store.get('clickThroughHotkey', DEFAULT_CLICKTHROUGH_HOTKEY))
+  ipcMain.handle('click-hotkey:set', (_, accelerator: string) =>
+    setStoredHotkey('clickThroughHotkey', accelerator)
   )
   ipcMain.handle('steam:clear-config', () => {
     store.setMany({ apiKey: '', steamId: '' })
