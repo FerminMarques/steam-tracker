@@ -16,7 +16,7 @@ export interface SteamApi {
   getAchievements(appId: string): Promise<ApiResult<Achievement[]>>
   searchWeb(appId: string, gameName: string, achievementName: string): Promise<Guide[]>
   getBestGuides(appId: string): Promise<Guide[]>
-  fetchGuideContent(url: string, achievementName: string, full?: boolean): Promise<{ success: boolean; content: string }>
+  fetchGuideContent(url: string, achievementName: string, full?: boolean): Promise<{ success: boolean; content: string; error?: string }>
   openUrl(url: string): void
   minimize(): void
   close(): void
@@ -37,14 +37,14 @@ export interface SteamApi {
   setPinnedAchievements(appId: string, pins: string[]): Promise<boolean>
   getPinnedGuides(appId: string): Promise<Record<string, Guide>>
   setPinnedGuides(appId: string, pins: Record<string, Guide>): Promise<boolean>
-  openGuidePanel(payload: { title: string; url: string; content: string }): void
-  updateGuidePanel(payload: { title: string; url: string; content: string }): void
-  getGuidePanelData(): Promise<{ title: string; url: string; content: string } | null>
+  openGuidePanel(payload: { title: string; url: string; content: string; error?: string | null }): void
+  updateGuidePanel(payload: { title: string; url: string; content: string; error?: string | null }): void
+  getGuidePanelData(): Promise<{ title: string; url: string; content: string; error?: string | null } | null>
   getGuidePanelSticky(): Promise<boolean>
   setGuidePanelSticky(val: boolean): void
   notifyFocusExited(): void
   closeGuidePanel(): void
-  onGuidePanelData(cb: (data: { title: string; url: string; content: string }) => void): () => void
+  onGuidePanelData(cb: (data: { title: string; url: string; content: string; error?: string | null }) => void): () => void
   onGuidePanelClosed(cb: () => void): () => void
   getManualProgress(appId: string): Promise<Record<string, { current: number; max: number }>>
   setManualProgress(appId: string, achApiName: string, current: number, max: number): Promise<boolean>

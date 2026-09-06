@@ -23,9 +23,15 @@ function openExternal() {
           </div>
         </div>
         <div class="reader-body">
-          <div v-if="store.loadingReader && !store.readerGuide.content" class="reader-loading">
+          <div v-if="store.loadingReader && !store.readerGuide.content && !store.readerGuide.error" class="reader-loading">
             <div class="spinner"></div>
             <span>{{ t("readerLoading") }}</span>
+          </div>
+          <div v-else-if="store.readerGuide.error" class="reader-error">
+            <p class="reader-error-title">{{ t("readerLoadFailed") }}</p>
+            <p v-if="store.readerGuide.error === 'blocked'" class="reader-error-desc">{{ t("readerLoadFailedBlocked") }}</p>
+            <p v-else class="reader-error-desc">{{ t("readerLoadFailedHint").replace("{error}", store.readerGuide.error) }}</p>
+            <button class="reader-open-ext" @click="openExternal">{{ t("readerOpenBrowserFooter") }}</button>
           </div>
           <GuideContent
             v-else
@@ -118,6 +124,28 @@ function openExternal() {
   gap: 10px;
   color: var(--text-secondary);
   font-size: 13px;
+}
+.reader-error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 16px;
+}
+.reader-error-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.reader-error-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 .reader-footer {
   padding: 8px 12px;

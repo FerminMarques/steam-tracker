@@ -64,6 +64,9 @@ const en = {
   readerClose: "Close",
   readerLoading: "Loading guide…",
   readerOpenBrowserFooter: "Open in browser ↗",
+  readerLoadFailed: "Couldn't load this guide here.",
+  readerLoadFailedBlocked: "This site blocks the embedded reader (Cloudflare protection). Open it in your browser instead.",
+  readerLoadFailedHint: "Error: {error}",
   panelKeepOpen: "Keep open when leaving focus mode",
 
   settingsTitle: "Settings",
@@ -187,6 +190,9 @@ const es: Record<MessageKey, string> = {
   readerClose: "Cerrar",
   readerLoading: "Cargando guía…",
   readerOpenBrowserFooter: "Abrir en navegador ↗",
+  readerLoadFailed: "No se pudo cargar esta guía aquí.",
+  readerLoadFailedBlocked: "Este sitio bloquea el lector integrado (protección Cloudflare). Ábrela en tu navegador.",
+  readerLoadFailedHint: "Error: {error}",
   panelKeepOpen: "Mantener abierta al salir del modo enfoque",
 
   settingsTitle: "Ajustes",

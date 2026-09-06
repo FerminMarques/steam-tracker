@@ -25,7 +25,7 @@ const steamApi = {
     ipcRenderer.invoke('search:web', { appId, gameName, achievementName }),
   getBestGuides: (appId: string): Promise<Guide[]> =>
     ipcRenderer.invoke('best-guides:get', appId),
-  fetchGuideContent: (url: string, achievementName: string, full = false): Promise<{ success: boolean; content: string }> =>
+  fetchGuideContent: (url: string, achievementName: string, full = false): Promise<{ success: boolean; content: string; error?: string }> =>
     ipcRenderer.invoke('fetch:guide-content', { url, achievementName, full }),
   openUrl: (url: string): void => ipcRenderer.send('open:url', url),
   minimize: (): void => ipcRenderer.send('window:minimize'),
@@ -65,18 +65,18 @@ const steamApi = {
     ipcRenderer.invoke('guidepins:get', appId),
   setPinnedGuides: (appId: string, pins: Record<string, Guide>): Promise<boolean> =>
     ipcRenderer.invoke('guidepins:set', { appId, pins }),
-  openGuidePanel: (payload: { title: string; url: string; content: string }): void =>
+  openGuidePanel: (payload: { title: string; url: string; content: string; error?: string | null }): void =>
     ipcRenderer.send('guide-panel:open', payload),
-  updateGuidePanel: (payload: { title: string; url: string; content: string }): void =>
+  updateGuidePanel: (payload: { title: string; url: string; content: string; error?: string | null }): void =>
     ipcRenderer.send('guide-panel:update', payload),
-  getGuidePanelData: (): Promise<{ title: string; url: string; content: string } | null> =>
+  getGuidePanelData: (): Promise<{ title: string; url: string; content: string; error?: string | null } | null> =>
     ipcRenderer.invoke('guide-panel:get-data'),
   getGuidePanelSticky: (): Promise<boolean> => ipcRenderer.invoke('guide-panel:get-sticky'),
   setGuidePanelSticky: (val: boolean): void => ipcRenderer.send('guide-panel:set-sticky', val),
   notifyFocusExited: (): void => ipcRenderer.send('guide-panel:focus-exited'),
   closeGuidePanel: (): void => ipcRenderer.send('guide-panel:close'),
-  onGuidePanelData: (cb: (data: { title: string; url: string; content: string }) => void): (() => void) => {
-    const handler = (_: Electron.IpcRendererEvent, data: { title: string; url: string; content: string }) => cb(data)
+  onGuidePanelData: (cb: (data: { title: string; url: string; content: string; error?: string | null }) => void): (() => void) => {
+    const handler = (_: Electron.IpcRendererEvent, data: { title: string; url: string; content: string; error?: string | null }) => cb(data)
     ipcRenderer.on('guide-panel:data', handler)
     return () => ipcRenderer.off('guide-panel:data', handler)
   },

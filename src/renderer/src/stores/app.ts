@@ -5,10 +5,21 @@ import type { Achievement, Guide } from '@shared/types'
 export type { Achievement, Guide }
 
 // Module-level cache: avoids re-fetching guides when re-selecting same achievement
+// Bounded LRU (max entries) to avoid unbounded growth across sessions/games
 let _searchGen = 0
+const MAX_GUIDE_CACHE = 100
 const _guidesCache = new Map<string, Guide[]>()
 // Full-text cache for the integrated reader (per URL)
 const _fullGuideCache = new Map<string, string>()
+
+function setLru<K, V>(map: Map<K, V>, key: K, value: V, max = MAX_GUIDE_CACHE): void {
+  if (map.has(key)) map.delete(key)
+  map.set(key, value)
+  if (map.size > max) {
+    const oldest = map.keys().next().value
+    if (oldest !== undefined) map.delete(oldest)
+  }
+}
 
 export const useAppStore = defineStore('app', () => {
   const currentGame = ref<{ appId: string; name: string } | null>(null)
@@ -32,9 +43,11 @@ export const useAppStore = defineStore('app', () => {
   const focusMode = ref(false)
   const expandedGuides = ref<Set<string>>(new Set())
   const manualProgress = ref<Map<string, { current: number; max: number }>>(new Map())
-  // Integrated guide reader state
-  const readerGuide = ref<{ title: string; url: string; content: string } | null>(null)
+  // Integrated guide reader state (error is shown instead of spinning forever)
+  const readerGuide = ref<{ title: string; url: string; content: string; error?: string | null } | null>(null)
   const loadingReader = ref(false)
+  // Tracks in-flight panel fetches per URL — single attempt, no retry loop
+  const _panelFetching = new Set<string>()
   // Separate guide panel window state (main window side)
   const guidePanelOpen = ref(false)
   const guidePanelUrl = ref<string | null>(null)
@@ -79,6 +92,7 @@ export const useAppStore = defineStore('app', () => {
       const nextGuides = new Map(pinnedGuides.value)
       nextGuides.delete(apiName)
       expandedGuides.value.delete(apiName)
+      _pinnedGuideErrors.delete(apiName)
       pinnedGuides.value = nextGuides
       persistGuidePins()
     } else {
@@ -110,17 +124,23 @@ export const useAppStore = defineStore('app', () => {
 // Video sites never yield readable text; guide *listing*/search pages are navigation, not content
 const NON_READABLE_URL_RE = /youtube\.com|youtu\.be|steamcommunity\.com\/app\/[^/]+\/guides\/?(\?|$)/i
 
-function togglePinnedGuide(apiName: string, guide: Guide) {
-  // Search/listing fallback links can't be scraped — don't allow pinning them
-  if (NON_READABLE_URL_RE.test(guide.url)) return
-  const next = new Map(pinnedGuides.value)
+  // Per-achievement fetch errors (403/blocked/timeout/…) so panels show a notice instead of spinning
+  const _pinnedGuideErrors = new Map<string, string>()
+  const _pinnedFetching = new Set<string>()
+
+  function togglePinnedGuide(apiName: string, guide: Guide) {
+    // Search/listing fallback links can't be scraped — don't allow pinning them
+    if (NON_READABLE_URL_RE.test(guide.url)) return
+    const next = new Map(pinnedGuides.value)
     if (next.get(apiName)?.id === guide.id) {
       next.delete(apiName)
       expandedGuides.value.delete(apiName)
+      _pinnedGuideErrors.delete(apiName)
     } else {
       next.set(apiName, guide)
-      // Fetch guide content in the background
-      fetchGuideContent(apiName, guide)
+      // New guide → drop any previous error and fetch once in the background
+      _pinnedGuideErrors.delete(apiName)
+      void fetchGuideContent(apiName, guide)
     }
     pinnedGuides.value = next
     // A pinned guide implies a pinned achievement
@@ -129,19 +149,50 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
   }
 
   async function fetchGuideContent(apiName: string, guide: Guide) {
-    if (guide.content) return
+    if (guide.content) {
+      _pinnedGuideErrors.delete(apiName)
+      return
+    }
+    // Single-flight per achievement: no parallel refetch loop
+    if (_pinnedFetching.has(apiName)) return
+    _pinnedFetching.add(apiName)
     try {
       const achName = achievements.value.find(a => a.apiName === apiName)?.displayName || ''
       const result = await window.steamApi.fetchGuideContent(guide.url, achName, true)
+      const existing = pinnedGuides.value.get(apiName)
+      if (!existing || existing.id !== guide.id) return
       if (result.success && result.content) {
+        _pinnedGuideErrors.delete(apiName)
         const next = new Map(pinnedGuides.value)
-        const existing = next.get(apiName)
-        if (existing && existing.id === guide.id) {
-          next.set(apiName, { ...existing, content: result.content })
-          pinnedGuides.value = next
+        next.set(apiName, { ...existing, content: result.content })
+        pinnedGuides.value = next
+      } else {
+        const err = result.error ?? 'empty'
+        _pinnedGuideErrors.set(apiName, err)
+        // Push the failure to the open panel so it stops spinning with a notice
+        if (guidePanelOpen.value && guidePanelUrl.value === guide.url) {
+          window.steamApi.updateGuidePanel({
+            title: guide.title,
+            url: guide.url,
+            content: '',
+            error: err
+          })
         }
       }
-    } catch { /* silent */ }
+    } catch {
+      const err = 'network'
+      _pinnedGuideErrors.set(apiName, err)
+      if (guidePanelOpen.value && guidePanelUrl.value === guide.url) {
+        window.steamApi.updateGuidePanel({
+          title: guide.title,
+          url: guide.url,
+          content: '',
+          error: err
+        })
+      }
+    } finally {
+      _pinnedFetching.delete(apiName)
+    }
   }
 
   const loadingGuidesContent = ref<Set<string>>(new Set())
@@ -169,7 +220,8 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     expandedGuides.value = next
   }
 
-  /** Open the full guide in the integrated reader (cached per URL) */
+  /** Open the full guide in the integrated reader (cached per URL).
+   *  Single fetch attempt: on failure the modal stays open with an error + browser fallback (no auto-loop). */
   async function openGuideReader(guide: Guide) {
     // Video sites / guide listing pages never yield readable text — go to the browser
     if (NON_READABLE_URL_RE.test(guide.url)) {      window.steamApi.openUrl(guide.url)
@@ -177,22 +229,24 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     }
     const cached = _fullGuideCache.get(guide.url)
     if (cached) {
-      readerGuide.value = { title: guide.title, url: guide.url, content: cached }
+      readerGuide.value = { title: guide.title, url: guide.url, content: cached, error: null }
       return
     }
-    readerGuide.value = { title: guide.title, url: guide.url, content: '' }
+    readerGuide.value = { title: guide.title, url: guide.url, content: '', error: null }
     loadingReader.value = true
     try {
       const res = await window.steamApi.fetchGuideContent(guide.url, '', true)
-      if (res.success) {
-        _fullGuideCache.set(guide.url, res.content)
-        if (readerGuide.value?.url === guide.url) {
-          readerGuide.value = { title: guide.title, url: guide.url, content: res.content }
-        }
+      if (readerGuide.value?.url !== guide.url) return
+      if (res.success && res.content) {
+        setLru(_fullGuideCache, guide.url, res.content)
+        readerGuide.value = { title: guide.title, url: guide.url, content: res.content, error: null }
       } else {
-        // Extraction failed — fall back to opening in the browser
-        readerGuide.value = null
-        window.steamApi.openUrl(guide.url)
+        // Notify in-modal instead of silently opening the browser or spinning forever
+        readerGuide.value = { title: guide.title, url: guide.url, content: '', error: res.error ?? 'empty' }
+      }
+    } catch {
+      if (readerGuide.value?.url === guide.url) {
+        readerGuide.value = { title: guide.title, url: guide.url, content: '', error: 'network' }
       }
     } finally {
       loadingReader.value = false
@@ -203,43 +257,71 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     readerGuide.value = null
   }
 
-  /** Open (or update) the separate guide panel window for a pinned guide */
+  /** Open (or update) the separate guide panel window for a pinned guide.
+   *  Single attempt: cached content or previous error is shown immediately, otherwise the
+   *  background fetch pushes either content or error — never an endless spinner. */
   function openGuidePanel(apiName: string) {
     const guide = pinnedGuides.value.get(apiName)
     if (!guide) return
-    if (!guide.content) loadPinnedGuideContent(apiName)
     guidePanelOpen.value = true
     guidePanelUrl.value = guide.url
     window.steamApi.openGuidePanel({
       title: guide.title,
       url: guide.url,
-      content: guide.content ?? ''
+      content: guide.content ?? '',
+      error: _pinnedGuideErrors.get(apiName) ?? null
     })
+    if (!guide.content && !_pinnedGuideErrors.has(apiName)) {
+      void loadPinnedGuideContent(apiName)
+    }
   }
 
-  /** Open (or update) the separate guide panel window for any guide (pinned or not) */
+  /** Open (or update) the separate guide panel window for any guide (pinned or not).
+   *  Single fetch attempt per URL: on failure the panel shows an error (never an endless spinner). */
   function openBestGuidePanel(guide: Guide) {
     guidePanelOpen.value = true
     guidePanelUrl.value = guide.url
     window.steamApi.openGuidePanel({
       title: guide.title,
       url: guide.url,
-      content: guide.content ?? ''
+      content: guide.content ?? '',
+      error: null
     })
-    if (!guide.content) {
-      window.steamApi
-        .fetchGuideContent(guide.url, '', true)
-        .then((res) => {
-          if (res.success && res.content && guidePanelUrl.value === guide.url) {
-            window.steamApi.updateGuidePanel({
-              title: guide.title,
-              url: guide.url,
-              content: res.content
-            })
-          }
-        })
-        .catch(() => { /* silent */ })
-    }
+    if (guide.content || _panelFetching.has(guide.url)) return
+    _panelFetching.add(guide.url)
+    window.steamApi
+      .fetchGuideContent(guide.url, '', true)
+      .then((res) => {
+        if (guidePanelUrl.value !== guide.url) return
+        if (res.success && res.content) {
+          window.steamApi.updateGuidePanel({
+            title: guide.title,
+            url: guide.url,
+            content: res.content,
+            error: null
+          })
+        } else {
+          window.steamApi.updateGuidePanel({
+            title: guide.title,
+            url: guide.url,
+            content: '',
+            error: res.error ?? 'empty'
+          })
+        }
+      })
+      .catch(() => {
+        if (guidePanelUrl.value === guide.url) {
+          window.steamApi.updateGuidePanel({
+            title: guide.title,
+            url: guide.url,
+            content: '',
+            error: 'network'
+          })
+        }
+      })
+      .finally(() => {
+        _panelFetching.delete(guide.url)
+      })
   }
 
   // Push content updates to the panel while it shows this guide (async fetch landing)
@@ -344,6 +426,7 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     _searchGen++
     _guidesCache.clear()
     _fullGuideCache.clear()
+    _pinnedGuideErrors.clear()
     await refreshAchievements()
     const sel = selectedAchievement.value
     if (sel && currentGame.value) {
@@ -381,6 +464,9 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
       _searchGen++
       _guidesCache.clear()
       _fullGuideCache.clear()
+      _pinnedGuideErrors.clear()
+      _pinnedFetching.clear()
+      _panelFetching.clear()
       readerGuide.value = null
       lastAppId.value = newAppId
       currentGame.value = game
@@ -456,7 +542,7 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
       )
       if (gen === _searchGen) {
         guides.value = result
-        _guidesCache.set(cacheKey, result)
+        setLru(_guidesCache, cacheKey, result)
         // Merge any newly found 100% guides into the game-level cache
         const known = new Set(bestGuides.value.map((g) => g.url))
         const fresh = result.filter((g) => g.is100Percent && !known.has(g.url))
@@ -490,6 +576,11 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
       pollingTimer.value = null
     }
     document.removeEventListener('visibilitychange', onVisibilityChange)
+    // Invalidate in-flight searches and free guide memory while hidden/unmounted
+    _searchGen++
+    _guidesCache.clear()
+    _fullGuideCache.clear()
+    _panelFetching.clear()
   }
 
   function resetForLogout() {
@@ -512,6 +603,9 @@ function togglePinnedGuide(apiName: string, guide: Guide) {
     focusMode.value = false
     _guidesCache.clear()
     _fullGuideCache.clear()
+    _pinnedGuideErrors.clear()
+    _pinnedFetching.clear()
+    _panelFetching.clear()
   }
 
   return {
