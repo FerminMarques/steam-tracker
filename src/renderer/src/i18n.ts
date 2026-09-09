@@ -92,6 +92,8 @@ const en = {
     "This language is AI-translated and still experimental — some text may stay in English or sound unnatural.",
   settingsAccentColor: "Accent Color",
   settingsWindowOpacity: "Window Opacity",
+  settingsPanelOpacity: "Guide Panel Opacity",
+  settingsPanelFollow: "Same as window opacity",
   settingsAccount: "Account",
   settingsAccountHint: "Your Steam API key and ID are stored locally.",
   settingsLogout: "Log out & reset credentials",
@@ -225,6 +227,8 @@ const es: Record<MessageKey, string> = {
     "Este idioma está traducido por IA y sigue siendo experimental — puede que algunos textos sigan en inglés o suenen poco naturales.",
   settingsAccentColor: "Color de acento",
   settingsWindowOpacity: "Opacidad de la ventana",
+  settingsPanelOpacity: "Opacidad del panel de guías",
+  settingsPanelFollow: "Igual que la ventana",
   settingsAccount: "Cuenta",
   settingsAccountHint:
     "Tu API key y tu ID de Steam se guardan localmente.",

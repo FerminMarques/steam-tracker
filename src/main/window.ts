@@ -28,6 +28,9 @@ export function createWindow(): void {
     if (store.get('clickThrough', 'false') === 'true') {
       mainWindow.setIgnoreMouseEvents(true, { forward: true })
     }
+    // Restore persisted opacity (defaults to fully opaque)
+    const savedOpacity = parseFloat(store.get('opacity', '1'))
+    mainWindow.setOpacity(isNaN(savedOpacity) ? 1 : Math.max(0.1, Math.min(1, savedOpacity)))
     mainWindow.show()
     // Notify renderer of initial pin state (may have mounted before ready-to-show)
     mainWindow.webContents.send('window:top-changed', true)

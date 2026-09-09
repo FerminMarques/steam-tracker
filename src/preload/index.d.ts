@@ -36,6 +36,9 @@ export interface SteamApi {
   resolveVanity(apiKey: string, vanityUrl: string): Promise<{ success: boolean; steamId?: string; error?: string }>
   getOpacity(): Promise<number>
   setOpacity(value: number): void
+  getGuidePanelOpacity(): Promise<number>
+  isGuidePanelFollowing(): Promise<boolean>
+  setGuidePanelOpacity(value: number | null): void
   resizeFocus(active: boolean, count: number, height?: number): void
   onFocusToggle(cb: () => void): () => void
   getPinnedAchievements(appId: string): Promise<string[]>

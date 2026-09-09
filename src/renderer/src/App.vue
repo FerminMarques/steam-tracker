@@ -20,6 +20,8 @@ const settingsClickHotkey = ref("CommandOrControl+Shift+C");
 const settingsClickHotkeyDisplay = ref("Ctrl+Shift+C");
 const clickHotkeyLabel = ref("Ctrl+Shift+C");
 const settingsOpacity = ref(1);
+const settingsPanelOpacity = ref(1);
+const settingsPanelFollow = ref(true);
 const recordingHotkey = ref(false);
 const recordingFocusHotkey = ref(false);
 const recordingClickHotkey = ref(false);
@@ -119,6 +121,8 @@ async function openSettings() {
   settingsClickHotkeyDisplay.value = formatHotkey(settingsClickHotkey.value);
   clickHotkeyLabel.value = settingsClickHotkeyDisplay.value;
   settingsOpacity.value = await window.steamApi.getOpacity();
+  settingsPanelOpacity.value = await window.steamApi.getGuidePanelOpacity();
+  settingsPanelFollow.value = await window.steamApi.isGuidePanelFollowing();
   const cfg = await window.steamApi.getConfig();
   settingsLanguage.value = cfg.language || 'english';
   settingsTheme.value = cfg.theme || 'violet';
@@ -159,6 +163,26 @@ function onOpacityChange(e: Event) {
   const val = parseFloat((e.target as HTMLInputElement).value);
   settingsOpacity.value = val;
   window.steamApi.setOpacity(val);
+  // A following panel (the default) mirrors the main window live
+  if (settingsPanelFollow.value) settingsPanelOpacity.value = val;
+}
+
+function onPanelOpacityChange(e: Event) {
+  const val = parseFloat((e.target as HTMLInputElement).value);
+  settingsPanelOpacity.value = val;
+  settingsPanelFollow.value = false;
+  window.steamApi.setGuidePanelOpacity(val);
+}
+
+function onPanelFollowChange(e: Event) {
+  const follow = (e.target as HTMLInputElement).checked;
+  settingsPanelFollow.value = follow;
+  if (follow) {
+    window.steamApi.setGuidePanelOpacity(null);
+    settingsPanelOpacity.value = settingsOpacity.value;
+  } else {
+    window.steamApi.setGuidePanelOpacity(settingsPanelOpacity.value);
+  }
 }
 
 function startRecording() {
@@ -401,6 +425,32 @@ async function logout() {
                 />
                 <span class="opacity-value">{{ Math.round(settingsOpacity * 100) }}%</span>
               </div>
+            </div>
+
+            <!-- Guide panel opacity -->
+            <div class="settings-section">
+              <div class="settings-label">{{ t("settingsPanelOpacity") }}</div>
+              <div class="opacity-row">
+                <input
+                  type="range"
+                  min="0.15"
+                  max="1"
+                  step="0.01"
+                  :value="settingsPanelOpacity"
+                  :disabled="settingsPanelFollow"
+                  class="opacity-slider"
+                  @input="onPanelOpacityChange"
+                />
+                <span class="opacity-value">{{ Math.round(settingsPanelOpacity * 100) }}%</span>
+              </div>
+              <label class="follow-row">
+                <input
+                  type="checkbox"
+                  :checked="settingsPanelFollow"
+                  @change="onPanelFollowChange"
+                />
+                <span>{{ t("settingsPanelFollow") }}</span>
+              </label>
             </div>
 
             <!-- Account -->
@@ -662,6 +712,23 @@ async function logout() {
   color: var(--text-secondary);
   min-width: 36px;
   text-align: right;
+}
+.follow-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.follow-row input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.opacity-slider:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 .progress-keys-row {
   display: flex;

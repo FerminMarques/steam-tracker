@@ -59,6 +59,9 @@ const steamApi = {
     ipcRenderer.invoke('steam:resolve-vanity', { apiKey, vanityUrl }),
   getOpacity: (): Promise<number> => ipcRenderer.invoke('window:get-opacity'),
   setOpacity: (value: number): void => ipcRenderer.send('window:set-opacity', value),
+  getGuidePanelOpacity: (): Promise<number> => ipcRenderer.invoke('guide-panel:get-opacity'),
+  isGuidePanelFollowing: (): Promise<boolean> => ipcRenderer.invoke('guide-panel:is-following'),
+  setGuidePanelOpacity: (value: number | null): void => ipcRenderer.send('guide-panel:set-opacity', value),
   resizeFocus: (active: boolean, count: number, height?: number): void =>
     ipcRenderer.send('focus:resize', { active, count, height }),
   onFocusToggle: (cb: () => void): (() => void) => {

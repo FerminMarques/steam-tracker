@@ -24,6 +24,34 @@ export function setGuidePanelClickThrough(enabled: boolean): void {
   if (panel && !panel.isDestroyed()) panel.setIgnoreMouseEvents(enabled, { forward: true })
 }
 
+function clampOpacity(v: number): number {
+  if (isNaN(v)) return 1
+  return Math.max(0.1, Math.min(1, v))
+}
+
+/** Own value when set, otherwise follows the main window opacity (the default) */
+export function getGuidePanelOpacity(): number {
+  const own = parseFloat(store.get('guidePanelOpacity', ''))
+  if (store.get('guidePanelOpacity', '') !== '' && !isNaN(own)) return clampOpacity(own)
+  return clampOpacity(parseFloat(store.get('opacity', '1')))
+}
+
+/** True when no own value is stored (panel mirrors the main window) */
+export function isGuidePanelOpacityFollowing(): boolean {
+  return store.get('guidePanelOpacity', '') === ''
+}
+
+/** val=null clears the override so the panel follows the main window again */
+export function setGuidePanelOpacity(val: number | null): void {
+  if (val === null || val === undefined) store.set('guidePanelOpacity', '')
+  else store.set('guidePanelOpacity', String(clampOpacity(val)))
+  applyGuidePanelOpacity()
+}
+
+export function applyGuidePanelOpacity(): void {
+  if (panel && !panel.isDestroyed()) panel.setOpacity(getGuidePanelOpacity())
+}
+
 export function openGuidePanel(parent: BrowserWindow, data: GuidePanelPayload): void {
   lastData = data
   // Avoid stacking 'closed' listeners when reopening from the same parent,
@@ -54,6 +82,7 @@ export function openGuidePanel(parent: BrowserWindow, data: GuidePanelPayload): 
     })
     // Same level as the overlay so it stays visible in borderless windowed games
     panel.setAlwaysOnTop(true, 'screen-saver')
+    applyGuidePanelOpacity()
     if (store.get('clickThrough', 'false') === 'true') {
       panel.setIgnoreMouseEvents(true, { forward: true })
     }
