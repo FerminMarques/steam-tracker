@@ -41,6 +41,11 @@ ACHIVIO is free and open-source. If it helps you, buy me a coffee:
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/fmarquesdev)
 
+Or donate crypto (double-check the network before sending):
+
+- **BTC** (Bitcoin network): `bc1pukyc69jwtkczp65glskjl8vs3rtd0w9erpw5uq72v3n48zzdyl9qngqjm2`
+- **USDT** (Tron / TRC20 network): `TW3PAf7xiKcaA6kpmcVuXnMbQ2Kvnrjfdd`
+
 ## How it works
 
 The app queries the Steam Web API with your own API key (configured on first run) to detect your current game and its achievements. Everything is stored locally (`userData/config.json`) — no backend, no telemetry.
