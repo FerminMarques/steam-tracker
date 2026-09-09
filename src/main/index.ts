@@ -15,7 +15,7 @@ import { createWindow, focusResize } from './window'
 import { getCurrentGame, getAchievements, getGameArt, resolveVanity } from './steam'
 import { searchWeb, getBestGuides } from './search'
 import { fetchGuideContent } from './scrape'
-import { openGuidePanel, updateGuidePanel, closeGuidePanel, getGuidePanelData, isGuidePanelSticky, setGuidePanelSticky, onGuidePanelFocusExited } from './guidePanel'
+import { openGuidePanel, updateGuidePanel, closeGuidePanel, getGuidePanelData, isGuidePanelSticky, setGuidePanelSticky, onGuidePanelFocusExited, getGuidePanelOpacity, isGuidePanelOpacityFollowing, setGuidePanelOpacity } from './guidePanel'
 import type { Guide } from '../shared/types'
 
 app.whenReady().then(() => {
@@ -162,8 +162,15 @@ app.whenReady().then(() => {
     BrowserWindow.fromWebContents(e.sender)?.getOpacity() ?? 1
   )
   ipcMain.on('window:set-opacity', (e, value: number) => {
-    BrowserWindow.fromWebContents(e.sender)?.setOpacity(Math.max(0.1, Math.min(1, value)))
+    const clamped = Math.max(0.1, Math.min(1, value))
+    store.set('opacity', String(clamped))
+    BrowserWindow.fromWebContents(e.sender)?.setOpacity(clamped)
+    // A following panel (the default) mirrors the main window live
+    if (isGuidePanelOpacityFollowing()) setGuidePanelOpacity(null)
   })
+  ipcMain.handle('guide-panel:get-opacity', () => getGuidePanelOpacity())
+  ipcMain.handle('guide-panel:is-following', () => isGuidePanelOpacityFollowing())
+  ipcMain.on('guide-panel:set-opacity', (_, value: number | null) => setGuidePanelOpacity(value))
 
   // --- Resolve Steam vanity URL → Steam ID64 ---
   ipcMain.handle('steam:resolve-vanity', (_, { apiKey, vanityUrl }: { apiKey: string; vanityUrl: string }) =>
